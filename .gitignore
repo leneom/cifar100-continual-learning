@@ -1,0 +1,22 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.venv/
+venv/
+
+# Dataset archives and extracted data
+data/
+
+# Model checkpoints are large; keep lightweight JSON/CSV/SVG results
+runs/**/checkpoint.pt
+
+# Local document-rendering intermediates
+tmp/
+report/rendered/
+tools/__pycache__/
+
+# Private research-outreach planning (keep local, do not publish)
+docs/FACULTY_MATCH.md
+docs/OUTREACH_DRAFTS.md
+docs/PAPER_READING_NOTES.md

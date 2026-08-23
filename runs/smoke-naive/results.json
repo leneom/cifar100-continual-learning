@@ -1,0 +1,134 @@
+{
+  "config": {
+    "dataset": "synthetic",
+    "data_root": "data",
+    "output_dir": "runs/smoke-naive",
+    "method": "naive",
+    "model": "tiny",
+    "num_classes": 6,
+    "classes_per_task": 2,
+    "epochs_per_task": 1,
+    "batch_size": 16,
+    "learning_rate": 0.1,
+    "momentum": 0.9,
+    "weight_decay": 0.0005,
+    "seed": 42,
+    "num_workers": 0,
+    "device": "auto",
+    "download": false,
+    "buffer_size": 2000,
+    "replay_batch_size": 64,
+    "ewc_lambda": 1000.0,
+    "ewc_decay": 1.0,
+    "fisher_samples": 1024,
+    "train_samples_per_class": 8,
+    "test_samples_per_class": 4,
+    "max_train_samples_per_task": null
+  },
+  "resolved_device": "cuda",
+  "resolved_model": "tiny",
+  "class_order": [
+    0,
+    3,
+    2,
+    4,
+    1,
+    5
+  ],
+  "tasks": [
+    [
+      0,
+      3
+    ],
+    [
+      2,
+      4
+    ],
+    [
+      1,
+      5
+    ]
+  ],
+  "accuracy_matrix": [
+    [
+      0.0,
+      null,
+      null
+    ],
+    [
+      0.0,
+      1.0,
+      null
+    ],
+    [
+      0.0,
+      1.0,
+      0.0
+    ]
+  ],
+  "metrics": {
+    "average_accuracy": [
+      0.0,
+      0.5,
+      0.3333333333333333
+    ],
+    "average_forgetting": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "final_average_accuracy": 0.3333333333333333,
+    "final_average_forgetting": 0.0
+  },
+  "task_logs": [
+    {
+      "task": 1,
+      "class_ids": [
+        0,
+        3
+      ],
+      "epochs": [
+        {
+          "epoch": 1,
+          "loss": 2.005059242248535,
+          "train_accuracy": 0.0
+        }
+      ],
+      "replay_buffer_size": 0,
+      "fisher_samples": 0
+    },
+    {
+      "task": 2,
+      "class_ids": [
+        2,
+        4
+      ],
+      "epochs": [
+        {
+          "epoch": 1,
+          "loss": 1.8434062004089355,
+          "train_accuracy": 0.0
+        }
+      ],
+      "replay_buffer_size": 0,
+      "fisher_samples": 0
+    },
+    {
+      "task": 3,
+      "class_ids": [
+        1,
+        5
+      ],
+      "epochs": [
+        {
+          "epoch": 1,
+          "loss": 2.2359066009521484,
+          "train_accuracy": 0.0
+        }
+      ],
+      "replay_buffer_size": 0,
+      "fisher_samples": 0
+    }
+  ],
+  "elapsed_seconds": 2.204240499995649
+}

@@ -1,0 +1,648 @@
+{
+  "config": {
+    "dataset": "cifar100",
+    "data_root": "data",
+    "output_dir": "runs/determinism-replay",
+    "method": "replay",
+    "model": "resnet18",
+    "num_classes": 100,
+    "classes_per_task": 10,
+    "epochs_per_task": 1,
+    "batch_size": 64,
+    "learning_rate": 0.1,
+    "momentum": 0.9,
+    "weight_decay": 0.0005,
+    "seed": 42,
+    "deterministic": true,
+    "num_workers": 0,
+    "device": "auto",
+    "download": false,
+    "buffer_size": 12,
+    "replay_batch_size": 8,
+    "ewc_lambda": 1000.0,
+    "ewc_decay": 1.0,
+    "fisher_samples": 1024,
+    "train_samples_per_class": 32,
+    "test_samples_per_class": 16,
+    "max_train_samples_per_task": 64
+  },
+  "resolved_device": "cuda",
+  "resolved_model": "resnet18",
+  "class_order": [
+    42,
+    96,
+    62,
+    98,
+    46,
+    95,
+    60,
+    24,
+    78,
+    16,
+    68,
+    70,
+    11,
+    13,
+    97,
+    52,
+    99,
+    19,
+    71,
+    10,
+    89,
+    86,
+    18,
+    40,
+    5,
+    38,
+    9,
+    82,
+    83,
+    43,
+    32,
+    94,
+    67,
+    93,
+    75,
+    59,
+    79,
+    1,
+    50,
+    73,
+    66,
+    45,
+    63,
+    58,
+    22,
+    3,
+    87,
+    4,
+    61,
+    51,
+    12,
+    74,
+    21,
+    20,
+    6,
+    35,
+    44,
+    48,
+    37,
+    33,
+    15,
+    88,
+    31,
+    69,
+    27,
+    81,
+    85,
+    56,
+    7,
+    65,
+    47,
+    41,
+    29,
+    80,
+    57,
+    84,
+    36,
+    17,
+    34,
+    72,
+    2,
+    91,
+    8,
+    53,
+    30,
+    90,
+    26,
+    23,
+    54,
+    76,
+    14,
+    55,
+    0,
+    64,
+    77,
+    39,
+    25,
+    92,
+    49,
+    28
+  ],
+  "tasks": [
+    [
+      42,
+      96,
+      62,
+      98,
+      46,
+      95,
+      60,
+      24,
+      78,
+      16
+    ],
+    [
+      68,
+      70,
+      11,
+      13,
+      97,
+      52,
+      99,
+      19,
+      71,
+      10
+    ],
+    [
+      89,
+      86,
+      18,
+      40,
+      5,
+      38,
+      9,
+      82,
+      83,
+      43
+    ],
+    [
+      32,
+      94,
+      67,
+      93,
+      75,
+      59,
+      79,
+      1,
+      50,
+      73
+    ],
+    [
+      66,
+      45,
+      63,
+      58,
+      22,
+      3,
+      87,
+      4,
+      61,
+      51
+    ],
+    [
+      12,
+      74,
+      21,
+      20,
+      6,
+      35,
+      44,
+      48,
+      37,
+      33
+    ],
+    [
+      15,
+      88,
+      31,
+      69,
+      27,
+      81,
+      85,
+      56,
+      7,
+      65
+    ],
+    [
+      47,
+      41,
+      29,
+      80,
+      57,
+      84,
+      36,
+      17,
+      34,
+      72
+    ],
+    [
+      2,
+      91,
+      8,
+      53,
+      30,
+      90,
+      26,
+      23,
+      54,
+      76
+    ],
+    [
+      14,
+      55,
+      0,
+      64,
+      77,
+      39,
+      25,
+      92,
+      49,
+      28
+    ]
+  ],
+  "accuracy_matrix": [
+    [
+      0.1,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      0.0,
+      0.1,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      0.0,
+      0.0,
+      0.102,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      0.117,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.108,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.111,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      0.0,
+      0.099,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      null,
+      null,
+      null
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.1,
+      null,
+      null
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.103,
+      null
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.099
+    ]
+  ],
+  "metrics": {
+    "average_accuracy": [
+      0.1,
+      0.05,
+      0.033999999999999996,
+      0.02925,
+      0.0216,
+      0.0185,
+      0.014142857142857143,
+      0.0125,
+      0.011444444444444445,
+      0.0099
+    ],
+    "average_forgetting": [
+      0.0,
+      0.1,
+      0.1,
+      0.10066666666666667,
+      0.10475000000000001,
+      0.10540000000000001,
+      0.08983333333333333,
+      0.09114285714285715,
+      0.09225,
+      0.09344444444444444
+    ],
+    "final_average_accuracy": 0.0099,
+    "final_average_forgetting": 0.09344444444444444
+  },
+  "task_logs": [
+    {
+      "task": 1,
+      "class_ids": [
+        42,
+        96,
+        62,
+        98,
+        46,
+        95,
+        60,
+        24,
+        78,
+        16
+      ],
+      "epochs": [
+        {
+          "epoch": 1,
+          "loss": 4.750030994415283,
+          "train_accuracy": 0.0
+        }
+      ],
+      "replay_buffer_size": 12,
+      "fisher_samples": 0
+    },
+    {
+      "task": 2,
+      "class_ids": [
+        68,
+        70,
+        11,
+        13,
+        97,
+        52,
+        99,
+        19,
+        71,
+        10
+      ],
+      "epochs": [
+        {
+          "epoch": 1,
+          "loss": 6.591118812561035,
+          "train_accuracy": 0.0
+        }
+      ],
+      "replay_buffer_size": 12,
+      "fisher_samples": 0
+    },
+    {
+      "task": 3,
+      "class_ids": [
+        89,
+        86,
+        18,
+        40,
+        5,
+        38,
+        9,
+        82,
+        83,
+        43
+      ],
+      "epochs": [
+        {
+          "epoch": 1,
+          "loss": 6.695047378540039,
+          "train_accuracy": 0.013888888888888888
+        }
+      ],
+      "replay_buffer_size": 12,
+      "fisher_samples": 0
+    },
+    {
+      "task": 4,
+      "class_ids": [
+        32,
+        94,
+        67,
+        93,
+        75,
+        59,
+        79,
+        1,
+        50,
+        73
+      ],
+      "epochs": [
+        {
+          "epoch": 1,
+          "loss": 6.175130844116211,
+          "train_accuracy": 0.0
+        }
+      ],
+      "replay_buffer_size": 12,
+      "fisher_samples": 0
+    },
+    {
+      "task": 5,
+      "class_ids": [
+        66,
+        45,
+        63,
+        58,
+        22,
+        3,
+        87,
+        4,
+        61,
+        51
+      ],
+      "epochs": [
+        {
+          "epoch": 1,
+          "loss": 5.803425312042236,
+          "train_accuracy": 0.0
+        }
+      ],
+      "replay_buffer_size": 12,
+      "fisher_samples": 0
+    },
+    {
+      "task": 6,
+      "class_ids": [
+        12,
+        74,
+        21,
+        20,
+        6,
+        35,
+        44,
+        48,
+        37,
+        33
+      ],
+      "epochs": [
+        {
+          "epoch": 1,
+          "loss": 6.213807582855225,
+          "train_accuracy": 0.0
+        }
+      ],
+      "replay_buffer_size": 12,
+      "fisher_samples": 0
+    },
+    {
+      "task": 7,
+      "class_ids": [
+        15,
+        88,
+        31,
+        69,
+        27,
+        81,
+        85,
+        56,
+        7,
+        65
+      ],
+      "epochs": [
+        {
+          "epoch": 1,
+          "loss": 5.793630599975586,
+          "train_accuracy": 0.0
+        }
+      ],
+      "replay_buffer_size": 12,
+      "fisher_samples": 0
+    },
+    {
+      "task": 8,
+      "class_ids": [
+        47,
+        41,
+        29,
+        80,
+        57,
+        84,
+        36,
+        17,
+        34,
+        72
+      ],
+      "epochs": [
+        {
+          "epoch": 1,
+          "loss": 6.0427374839782715,
+          "train_accuracy": 0.0
+        }
+      ],
+      "replay_buffer_size": 12,
+      "fisher_samples": 0
+    },
+    {
+      "task": 9,
+      "class_ids": [
+        2,
+        91,
+        8,
+        53,
+        30,
+        90,
+        26,
+        23,
+        54,
+        76
+      ],
+      "epochs": [
+        {
+          "epoch": 1,
+          "loss": 5.819306373596191,
+          "train_accuracy": 0.013888888888888888
+        }
+      ],
+      "replay_buffer_size": 12,
+      "fisher_samples": 0
+    },
+    {
+      "task": 10,
+      "class_ids": [
+        14,
+        55,
+        0,
+        64,
+        77,
+        39,
+        25,
+        92,
+        49,
+        28
+      ],
+      "epochs": [
+        {
+          "epoch": 1,
+          "loss": 5.76608943939209,
+          "train_accuracy": 0.0
+        }
+      ],
+      "replay_buffer_size": 12,
+      "fisher_samples": 0
+    }
+  ],
+  "elapsed_seconds": 23.308670400001574
+}
