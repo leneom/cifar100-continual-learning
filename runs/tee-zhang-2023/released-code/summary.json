@@ -1,0 +1,15 @@
+[
+  {
+    "implementation": "released-code",
+    "division": 1,
+    "completed_seeds": "0",
+    "n": 1,
+    "average_accuracy_mean": 0.39744920445610454,
+    "average_accuracy_std": 0.0,
+    "paper_average_accuracy": 0.399,
+    "forgetfulness_mean": 0.6448280053482436,
+    "forgetfulness_std": 0.0,
+    "paper_forgetfulness": 0.639,
+    "elapsed_seconds_mean": 3302.5906597000003
+  }
+]

@@ -1,0 +1,271 @@
+{
+  "paper": {
+    "title": "Integrating Curricula with Replays: Its Effects on Continual Learning",
+    "authors": [
+      "Ren Jie Tee",
+      "Mengmi Zhang"
+    ],
+    "target": "Table 1 ciFAIR-100 interleave divisions"
+  },
+  "config": {
+    "data_root": "data",
+    "output_dir": "runs/tee-zhang-2023/smoke-released-code-div120-seed0",
+    "seed": 0,
+    "division": 120,
+    "sequence_implementation": "released-code",
+    "class_order_seed": 100,
+    "buffer_size": 1200,
+    "image_size": 74,
+    "batch_size": 32,
+    "learning_rate": 0.001,
+    "momentum": 0.9,
+    "patience": 5,
+    "max_epochs_per_task": 1,
+    "max_tasks": 2,
+    "max_train_samples_per_class": 32,
+    "num_workers": 0,
+    "device": "auto",
+    "deterministic": true,
+    "pretrained": true,
+    "amp": true,
+    "download": false
+  },
+  "environment": {
+    "python": "3.10.20",
+    "torch": "2.13.0+cu126",
+    "torchvision": "0.28.0+cu126",
+    "device": "cuda",
+    "cuda_device": "NVIDIA GeForce RTX 4080 Laptop GPU"
+  },
+  "class_order": [
+    57,
+    76,
+    27,
+    11,
+    17,
+    34,
+    83,
+    89,
+    19,
+    31,
+    62,
+    2,
+    5,
+    85,
+    53,
+    79,
+    4,
+    73,
+    69,
+    41,
+    16,
+    66,
+    7,
+    46,
+    13,
+    65,
+    88,
+    43,
+    70,
+    71,
+    72,
+    60,
+    30,
+    63,
+    56,
+    84,
+    21,
+    37,
+    75,
+    32,
+    45,
+    94,
+    61,
+    3,
+    67,
+    78,
+    8,
+    74,
+    40,
+    28,
+    95,
+    80,
+    1,
+    91,
+    12,
+    86,
+    36,
+    54,
+    49,
+    9,
+    25,
+    38,
+    0,
+    23,
+    87,
+    20,
+    48,
+    35,
+    59,
+    51,
+    77,
+    52,
+    47,
+    92,
+    24,
+    99,
+    96,
+    81,
+    39,
+    29,
+    42,
+    26,
+    82,
+    6,
+    33,
+    97,
+    10,
+    15,
+    68,
+    14,
+    64,
+    55,
+    44,
+    93,
+    50,
+    90,
+    22,
+    98,
+    58,
+    18
+  ],
+  "seen_accuracy_trajectory": [
+    0.252,
+    0.15
+  ],
+  "task1_accuracy_trajectory": [
+    0.252,
+    0.174
+  ],
+  "accuracy_matrix": [
+    [
+      0.252,
+      null
+    ],
+    [
+      0.174,
+      0.126
+    ]
+  ],
+  "metrics": {
+    "continual_average_accuracy": 0.201,
+    "forgetfulness": 0.3095238095238096,
+    "task1_reference_accuracy": 0.252,
+    "average_accuracy": [
+      0.252,
+      0.15
+    ],
+    "average_forgetting": [
+      0.0,
+      0.07800000000000001
+    ],
+    "final_average_accuracy": 0.15,
+    "final_average_forgetting": 0.07800000000000001
+  },
+  "task_logs": [
+    {
+      "task": 1,
+      "stream_labels": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "original_class_ids": [
+        57,
+        76,
+        27,
+        11,
+        17
+      ],
+      "seen_accuracy": 0.252,
+      "task1_accuracy": 0.252,
+      "epochs_run": 1,
+      "best_validation_loss": 1.6159941415786743,
+      "stopped_by_patience": false,
+      "buffer_before": 0,
+      "buffer_after": 160,
+      "buffer_class_counts": {
+        "0": 32,
+        "1": 32,
+        "2": 32,
+        "3": 32,
+        "4": 32
+      },
+      "current_original": 160,
+      "current_presented": 200,
+      "replay_original": 0,
+      "replay_presented": 0
+    },
+    {
+      "task": 2,
+      "stream_labels": [
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "original_class_ids": [
+        34,
+        83,
+        89,
+        19,
+        31
+      ],
+      "seen_accuracy": 0.15,
+      "task1_accuracy": 0.174,
+      "epochs_run": 1,
+      "best_validation_loss": 2.252671871185303,
+      "stopped_by_patience": false,
+      "buffer_before": 160,
+      "buffer_after": 320,
+      "buffer_class_counts": {
+        "0": 32,
+        "1": 32,
+        "2": 32,
+        "3": 32,
+        "4": 32,
+        "5": 32,
+        "6": 32,
+        "7": 32,
+        "8": 32,
+        "9": 32
+      },
+      "current_original": 160,
+      "current_presented": 200,
+      "replay_original": 160,
+      "replay_presented": 160
+    }
+  ],
+  "epoch_logs": [
+    {
+      "task": 1,
+      "epoch": 1,
+      "train_loss": 1.71572021484375,
+      "train_accuracy": 0.215,
+      "val_loss": 1.6159941415786743,
+      "val_accuracy": 0.248
+    },
+    {
+      "task": 2,
+      "epoch": 1,
+      "train_loss": 2.3215928819444445,
+      "train_accuracy": 0.13055555555555556,
+      "val_loss": 2.252671871185303,
+      "val_accuracy": 0.132
+    }
+  ],
+  "elapsed_seconds": 12.465739900000699
+}

@@ -4,6 +4,7 @@ __pycache__/
 .mypy_cache/
 .venv/
 venv/
+.torch-cache/
 
 # Dataset archives and extracted data
 data/
