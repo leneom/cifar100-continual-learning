@@ -14,6 +14,37 @@
 
 ![Average accuracy and forgetting curves](runs/cifar100-comparison.svg)
 
+## Tee and Zhang (2023) 四随机种子复现
+
+按照作者发布代码中的 interleave-division 顺序，完成了 ciFAIR-100
+divisions `1 / 120 / 300` × seeds `0 / 1 / 2 / 3` 的 12 组正式实验。表中误差为四个
+seed 的样本标准差，`F` 越低越好：
+
+| Division | 复现 Avg Acc | 论文 Avg Acc | 差值 | 复现 F | 论文 F | 差值 |
+|---:|---:|---:|---:|---:|---:|---:|
+| 1 | 39.59% ± 0.42% | 39.9% | -0.31 pp | 64.69% ± 0.52% | 63.9% | +0.79 pp |
+| 120 | **46.49% ± 0.75%** | 46.6% | -0.11 pp | **55.50% ± 0.67%** | 55.1% | +0.40 pp |
+| 300 | 46.38% ± 0.55% | 46.6% | -0.22 pp | 56.70% ± 1.07% | 56.1% | +0.60 pp |
+
+![Tee and Zhang paper comparison](report/figures/tee_zhang_2023_paper_comparison.png)
+
+三组 Avg Acc 与论文相差 0.11–0.31 个百分点，`F` 相差 0.40–0.79 个百分点；
+不仅数值接近，而且复现了主趋势：division 120 相比 division 1 显著改善，division
+300 没有继续提高准确率，并且遗忘略高于 division 120。12 个 accuracy matrix 均为
+20×20，没有 NaN 或 Infinity，最终矩阵进程退出码为 0，错误日志为空。
+
+这批结果支持“成功复现所选 Table 1 条件及其相对排序”，但仍有三个边界：
+
+- 只覆盖论文五个 divisions 中的 `1 / 120 / 300`，尚未运行 `8 / 60`；
+- 论文附录写 72×72，而发布代码实际使用 74×74，本次遵循发布代码；
+- 发布代码在 division 120/300 下分别每 epoch 重复 90/150 个 current examples，
+  所以当前结果还不能把提升完全归因于 interleaving frequency。
+
+下一项决定性实验是使用 paired seeds 运行 `equal-budget` 版本，移除 duplicate-tail
+sample-count confound。完整方法、逐 seed 附录和复现命令见
+[复现报告源文档](report/TEE_ZHANG_2023_REPRODUCTION_REPORT.md) 与
+[协议审计](docs/TEE_ZHANG_2023_REPRODUCTION.md)。
+
 ## 实验设置
 
 - 数据集：CIFAR-100，50,000 张训练图和 10,000 张测试图。

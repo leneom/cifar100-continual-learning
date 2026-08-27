@@ -20,6 +20,22 @@ The replay-capacity trend is consistent across seeds `0`, `1`, and `42`:
 
 All three seeds preserve the ordering `1,000 < 2,000 < 5,000` in final average accuracy. Larger replay memory therefore produces a robust improvement in this configuration, although it does not eliminate forgetting.
 
+## Paper reproduction: Tee and Zhang (2023)
+
+The project now includes a four-seed reproduction of selected ciFAIR-100 conditions from Table 1 of *Integrating Curricula with Replays: Its Effects on Continual Learning*. The released-code divisions `1 / 120 / 300` were each run with seeds `0 / 1 / 2 / 3`.
+
+| Division | Reproduction Avg Acc | Paper Avg Acc | Reproduction F | Paper F |
+|---:|---:|---:|---:|---:|
+| 1 | 39.59% ± 0.42% | 39.9% | 64.69% ± 0.52% | 63.9% |
+| 120 | **46.49% ± 0.75%** | 46.6% | **55.50% ± 0.67%** | 55.1% |
+| 300 | 46.38% ± 0.55% | 46.6% | 56.70% ± 1.07% | 56.1% |
+
+![Paper targets and reproduction](report/figures/tee_zhang_2023_paper_comparison.png)
+
+All six reproduced headline metrics are within 0.79 percentage points of the paper, and the main ordering is recovered: division 120 improves accuracy and forgetting over division 1, while division 300 provides no further accuracy gain. The report explicitly documents two paper-code discrepancies: the released code uses 74×74 images although the appendix states 72×72, and its chunking duplicates current-task tail examples for divisions 120 and 300. The next sensitivity experiment therefore uses the repository's `equal-budget` implementation.
+
+See the [protocol and audit](docs/TEE_ZHANG_2023_REPRODUCTION.md), [editable reproduction report](report/TEE_ZHANG_2023_REPRODUCTION_REPORT.md), and [machine-readable summary](runs/tee-zhang-2023/released-code/summary.csv). The local PDF can be regenerated with `python tools/build_tee_zhang_reproduction_report.py`.
+
 ## Research question
 
 The project studies a simple but consequential question:
@@ -49,7 +65,7 @@ CIFAR-100 is split into ten tasks of ten classes. A ResNet-18 learns the tasks s
 - accuracy-matrix, JSON, CSV, checkpoint, and SVG artifacts;
 - resumable buffer-size and multi-seed ablations;
 - guards against non-finite training loss;
-- eight automated tests for task construction, metrics, Replay, EWC, ablation matching, statistics, and plotting.
+- thirteen automated tests for task construction, metrics, Replay, EWC, ablation matching, statistics, plotting, paper class order, interleave sequencing, replay quotas, and paper-specific metrics.
 
 ## Reproduce the project
 
@@ -95,6 +111,7 @@ docs/LEARNING_GUIDE.md    Conceptual guide and experiment workflow
 report/                   Professor-facing short research report
 train.py                  Main experiment entry point
 run_replay_ablation.py    Resumable capacity and multi-seed study
+run_tee_zhang_2023_matrix.py  Resumable paper-reproduction matrix
 plot_results.py           Method-comparison visualization
 RESULTS.md                Detailed observations, failures, and limitations
 ```
@@ -109,6 +126,6 @@ RESULTS.md                Detailed observations, failures, and limitations
 
 ## Next research step
 
-The next method-level extension fixes the buffer at 2,000 examples and compares the current uniform replay baseline with one curriculum- or importance-aware sampling policy. This isolates whether **which** examples are replayed improves retention and positive transfer beyond simply storing more data. The same seeds and training budget will be used for a paired comparison. DER++ remains a useful secondary baseline, while a separate systems experiment will test compact `uint8` storage with dynamic replay-time augmentation.
+The immediate paper-reproduction extension reruns divisions `1 / 120 / 300` with paired seeds under the `equal-budget` sequence implementation. This removes the released code's duplicate-tail exposure and tests whether the division-120 advantage is attributable to interleaving rather than unequal sample counts. The broader method-level extension then fixes the buffer at 2,000 examples and compares uniform replay with one curriculum- or importance-aware sampling policy. DER++ remains a useful secondary baseline, while a separate systems experiment will test compact `uint8` storage with dynamic replay-time augmentation.
 
 This repository is an independent learning-and-research project intended to demonstrate a complete experimental workflow: formulate a question, implement baselines, control comparisons, retain failed runs, quantify uncertainty, and state the limits of the evidence.

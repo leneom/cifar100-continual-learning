@@ -126,7 +126,7 @@ This distinction is part of the scientific result, not a cleanup detail.
 5. Run the matching `equal-budget` sensitivity experiment before interpreting
    the result as evidence for interleaving itself.
 
-## Live execution record
+## Completed execution record
 
 ### Validation completed
 
@@ -139,34 +139,41 @@ This distinction is part of the scientific result, not a cleanup detail.
   With 160 current examples and division 120, the former presented 200 current
   examples while the latter presented exactly 160, as expected.
 
-### First complete formal run
+### Formal released-code matrix
 
-Configuration:
+All 12 planned runs completed for divisions `1 / 120 / 300` and controlled
+seeds `0 / 1 / 2 / 3`.
 
-```text
-division = 1
-seed = 0
-sequence implementation = released-code
-tasks = 20
-full 450 training images per class
-image size = 74
-buffer size = 1200
-```
+| Division | Reproduction Avg Acc, mean +/- sample std | Paper Avg Acc | Delta | Reproduction F, mean +/- sample std | Paper F | Delta |
+|---:|---:|---:|---:|---:|---:|---:|
+| 1 | 39.59% +/- 0.42% | 39.9% | -0.31 pp | 64.69% +/- 0.52% | 63.9% | +0.79 pp |
+| 120 | **46.49% +/- 0.75%** | 46.6% | -0.11 pp | **55.50% +/- 0.67%** | 55.1% | +0.40 pp |
+| 300 | 46.38% +/- 0.55% | 46.6% | -0.22 pp | 56.70% +/- 1.07% | 56.1% | +0.60 pp |
 
-Verified result:
+The bounded reproduction meets its preregistered qualitative success criteria:
 
-| Metric | Seed-0 reproduction | Paper four-run mean |
-|---|---:|---:|
-| Continual average accuracy | 39.7449% | 39.9% |
-| Forgetfulness F | 64.4828% | 63.9% |
-| Final 100-class accuracy | 20.5900% | not the Table 1 metric |
-| Task-1 accuracy, initial -> final | 86.6% -> 15.4% | not reported in Table 1 |
-| Runtime | 55.04 minutes | not reported |
+1. division 120 raises continual average accuracy by 6.90 points and lowers F
+   by 9.19 points relative to division 1;
+2. division 300 provides no accuracy gain over division 120 and has slightly
+   worse F; and
+3. every reported mean is close to the paper, with a maximum absolute gap of
+   0.79 percentage points across the six headline metrics.
 
-The average-accuracy match is encouraging, but this is not yet a reproduction
-claim. Both seed-0 metrics are close to the paper's four-run means, but seeds
-1/2/3 must be completed before judging division 1, followed by the four-seed
-division 120 and 300 conditions.
+This supports a successful reproduction of the selected Table 1 conditions
+and their ordering. It is not a reconstruction of the complete five-division
+curve because divisions 8 and 60 were not run.
+
+### Evidence integrity
+
+- Twelve `results.json` files and twelve 20x20 accuracy matrices are present.
+- No NaN or Infinity appears in the saved JSON or CSV evidence.
+- The final matrix runner exited with code 0 and empty error logs.
+- Every run records the configuration, software and GPU environment, per-task
+  trajectories, per-epoch logs, matrix, and checkpoint.
+- Two early division-1 elapsed-time values include Windows Modern Standby and
+  must not be used for runtime comparison. Their numerical results are complete.
+
+### Metric audit correction
 
 An initial implementation incorrectly treated `F` as an absolute accuracy-point
 drop and included Task 1. The raw trajectory was unaffected. The error was found
@@ -174,22 +181,10 @@ by auditing the authors' plotting notebook, corrected before launching the
 remaining formal runs, and the saved seed-0 summaries were recomputed without
 retraining.
 
-Run command:
+### Reproduction command
 
 ```powershell
 $env:TORCH_HOME = "$PWD\.torch-cache"
-conda run --no-capture-output -n ece488_clip python reproduce_tee_zhang_2023.py `
-  --division 1 `
-  --sequence-implementation released-code `
-  --max-tasks 20 `
-  --max-epochs-per-task 100 `
-  --seed 0 `
-  --output-dir runs/tee-zhang-2023/released-code/division-001/seed-0
-```
-
-Resume the complete matrix with:
-
-```powershell
 conda run --no-capture-output -n ece488_clip python run_tee_zhang_2023_matrix.py `
   --sequence-implementation released-code `
   --divisions 1 120 300 `
@@ -198,3 +193,10 @@ conda run --no-capture-output -n ece488_clip python run_tee_zhang_2023_matrix.py
 
 The matrix runner validates matching configurations, skips completed runs, and
 updates `summary.json` and `summary.csv` after every successful run.
+
+### Next scientific step
+
+Run the same divisions and paired seeds in `equal-budget` mode. This removes the
+released code's duplicate-tail exposure while retaining the interleave schedule.
+If the division-120 benefit remains, it becomes stronger evidence for
+interleaving frequency rather than unequal current-sample counts.

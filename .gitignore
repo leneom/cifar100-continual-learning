@@ -16,6 +16,12 @@ runs/**/checkpoint.pt
 tmp/
 report/rendered/
 tools/__pycache__/
+output/pdf/
+
+# Local Windows overnight-run controls and logs
+runs/**/night-controller/
+tools/keep_awake_black_screen.ps1
+tools/run_tee_zhang_until_deadline.ps1
 
 # Private research-outreach planning (keep local, do not publish)
 docs/FACULTY_MATCH.md
