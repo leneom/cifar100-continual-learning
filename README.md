@@ -66,6 +66,18 @@ Every accuracy mean is within 0.44 pp of the paper and the full shape is recover
 
 See the [protocol and audit](docs/TEE_ZHANG_2023_REPRODUCTION.md), [editable reproduction report](report/TEE_ZHANG_2023_REPRODUCTION_REPORT.md), and [machine-readable summary](runs/tee-zhang-2023/released-code/summary.csv). The local PDF can be regenerated with `python tools/build_tee_zhang_reproduction_report.py`.
 
+## Replay sampling: uniform vs loss-prioritized
+
+With the buffer fixed at 2,000 examples (reservoir storage, 64 replayed per step), the only difference between arms is which stored examples are drawn. The `loss` arm uses prioritized replay: priority `(last replay loss + 1e-3) ** 0.6`, weighted draws without replacement, new slots at the running maximum priority, with alpha fixed before any run ([pre-registration](docs/REPLAY_SAMPLING_PLAN.md)). Both arms ran on WSL with paired seeds `0–7`.
+
+| Policy | Final average accuracy | Final average forgetting |
+|---|---:|---:|
+| uniform | 17.14% ± 1.66% | 55.05% ± 2.07% |
+| loss | 17.74% ± 1.19% | 54.03% ± 1.79% |
+| Paired diff, loss − uniform (95% CI) | +0.59 pp [−0.98, +2.17], p = 0.40 | −1.01 pp [−2.56, +0.53], p = 0.16 |
+
+No benefit is detected; the effect is bounded to roughly −1 to +2 pp. The diagnostics explain why: while training task 10, the mean priority of tasks 1–8 is only 0.058 (uniform: 1.0), so the model has memorized the stored examples and buffer loss no longer tracks test-set forgetting. Prioritization therefore mostly shifts draws toward the most recent old task (task 9 share 11.3% → 17.1%). Data: `runs/replay-sampling/`; runner: `run_replay_sampling.py`.
+
 ## Research question
 
 The project studies a simple but consequential question:
@@ -156,6 +168,6 @@ RESULTS.md                Detailed observations, failures, and limitations
 
 ## Next research step
 
-The paper reproduction is now complete: the full Table 1 curve is recovered on one platform, and the equal-budget control supports the interleaving interpretation. The next step is method-level: fix the buffer at 2,000 examples and compares uniform replay with one curriculum- or importance-aware sampling policy. DER++ remains a useful secondary baseline, while a separate systems experiment will test compact `uint8` storage with dynamic replay-time augmentation.
+The paper reproduction is now complete: the full Table 1 curve is recovered on one platform, and the equal-budget control supports the interleaving interpretation. The first method-level comparison (uniform vs loss-prioritized replay at buffer 2,000) found no detectable effect because buffer loss collapses once the stored examples are memorized. The next step is a priority signal that memorization cannot mask, such as loss on fresh augmentations of stored examples or counts of forgetting events. DER++ remains a useful secondary baseline, while a separate systems experiment will test compact `uint8` storage with dynamic replay-time augmentation.
 
 This repository is an independent learning-and-research project intended to demonstrate a complete experimental workflow: formulate a question, implement baselines, control comparisons, retain failed runs, quantify uncertainty, and state the limits of the evidence.

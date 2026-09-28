@@ -72,6 +72,22 @@ division 120/300 仍比同 seed 的 WSL division 1 高 6.36 / 6.39 个百分点�
 60→120 提升 +1.42，120→300 进入平台（+0.02 [−0.52, +0.57]）。`F` 在 division 1/8/120 上比论文高 0.8–1.3
 个百分点，是 Windows 复现中也出现过的小而稳定的偏移。分析脚本：`tools/analyze_tee_zhang_curve.py`。
 
+### Replay 采样策略：uniform vs loss 优先级
+
+buffer 固定为 2,000（reservoir 存储，每步回放 64 个），两组只在"抽哪些样本回放"上不同。`loss` 组采用 prioritized replay：
+优先级 `(最近回放 loss + 1e-3) ** 0.6`，加权不放回抽样，新样本取当前最大优先级，α 在实验前固定
+（[预注册](docs/REPLAY_SAMPLING_PLAN.md)）。两组都在 WSL 上按 seed `0–7` 配对运行。
+
+| 策略 | 最终平均准确率 | 最终平均遗忘 |
+|---|---:|---:|
+| uniform | 17.14% ± 1.66% | 55.05% ± 2.07% |
+| loss | 17.74% ± 1.19% | 54.03% ± 1.79% |
+| 配对差值 loss − uniform (95% CI) | +0.59 pp [−0.98, +2.17]，p = 0.40 | −1.01 pp [−2.56, +0.53]，p = 0.16 |
+
+没有检测到收益，效应被限制在约 −1 到 +2 个百分点之间。诊断给出了原因：训练 task 10 时，task 1–8 的平均优先级只有 0.058
+（uniform 为 1），模型已经记住了 buffer 中的样本，buffer 上的 loss 不再反映测试集上的遗忘，优先级因此主要把抽样推向最近的旧任务
+（task 9 份额 11.3% → 17.1%）。数据：`runs/replay-sampling/`；runner：`run_replay_sampling.py`。
+
 ## 项目实现
 
 - CIFAR-100 十任务、单头 class-incremental evaluation；
@@ -101,4 +117,4 @@ conda run --no-capture-output -n ece488_clip python run_replay_ablation.py --buf
 
 ## 后续研究
 
-论文复现已经完成：同一平台上复现了完整的 Table 1 曲线，`equal-budget` 对照实验也支持 interleaving 解释。下一步转向方法层面：把 buffer 固定为 2,000，在相同随机种子和训练预算下比较均匀回放与一种课程式或重要性采样策略，从“存多少样本”推进到“应回放哪些样本”。DER++ 保留为第二基线；另一个工程方向是将 ReplayBuffer 改为紧凑 `uint8` 原图存储，并在 replay 时动态增强。
+论文复现已经完成：同一平台上复现了完整的 Table 1 曲线，`equal-budget` 对照实验也支持 interleaving 解释。第一个方法层面的对比（buffer 2,000 下的 uniform 与 loss 优先级回放）没有检测到效应，原因是 buffer 样本被记住后 loss 失去信号。下一步是换一个不会被记忆掩盖的优先级信号，例如对存储样本的新增强视图计算 loss，或统计遗忘事件次数。DER++ 保留为第二基线；另一个工程方向是将 ReplayBuffer 改为紧凑 `uint8` 原图存储，并在 replay 时动态增强。

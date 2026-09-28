@@ -6,6 +6,7 @@ import json
 import os
 import random
 import time
+from collections import Counter
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
@@ -41,6 +42,8 @@ class ExperimentConfig:
     download: bool
     buffer_size: int
     replay_batch_size: int
+    replay_sampling: str
+    priority_alpha: float
     ewc_lambda: float
     ewc_decay: float
     fisher_samples: int
@@ -110,6 +113,7 @@ def train_epoch(
     replay_batch_size: int,
     ewc: OnlineEWC | None,
     ewc_lambda: float,
+    replay_draws: Counter[int] | None = None,
 ) -> tuple[float, float]:
     model.train()
     total_loss = 0.0
@@ -118,14 +122,24 @@ def train_epoch(
     for inputs, labels in loader:
         inputs = inputs.to(device, non_blocking=True)
         labels = labels.to(device, non_blocking=True)
+        replay_indices: list[int] = []
         if method == "replay" and replay_buffer is not None and len(replay_buffer) > 0:
-            old_inputs, old_labels = replay_buffer.sample(replay_batch_size, device)
+            old_inputs, old_labels, replay_indices = replay_buffer.sample_indexed(replay_batch_size, device)
+            if replay_draws is not None:
+                replay_draws.update(old_labels.tolist())
             inputs = torch.cat((inputs, old_inputs), dim=0)
             labels = torch.cat((labels, old_labels), dim=0)
 
         optimizer.zero_grad(set_to_none=True)
         logits = model(inputs)
         loss = nn.functional.cross_entropy(logits, labels)
+        if replay_indices and replay_buffer.sampling == "loss":
+            replay_count = len(replay_indices)
+            with torch.no_grad():
+                replay_losses = nn.functional.cross_entropy(
+                    logits[-replay_count:], labels[-replay_count:], reduction="none"
+                )
+            replay_buffer.update_priorities(replay_indices, replay_losses)
         if method == "ewc" and ewc is not None and ewc.ready:
             loss = loss + ewc_lambda * ewc.penalty(model)
         if not torch.isfinite(loss):
@@ -212,7 +226,16 @@ def run_experiment(config: ExperimentConfig) -> dict[str, object]:
         model_name = "resnet18" if config.dataset == "cifar100" else "tiny"
     model = build_model(model_name, stream.num_classes).to(device)
 
-    replay_buffer = ReplayBuffer(config.buffer_size, config.seed + 100) if config.method == "replay" else None
+    replay_buffer = (
+        ReplayBuffer(
+            config.buffer_size,
+            config.seed + 100,
+            sampling=config.replay_sampling,
+            priority_alpha=config.priority_alpha,
+        )
+        if config.method == "replay"
+        else None
+    )
     ewc = OnlineEWC(config.ewc_decay) if config.method == "ewc" else None
     task_count = len(stream.specs)
     accuracy_matrix: list[list[float | None]] = [[None] * task_count for _ in range(task_count)]
@@ -242,6 +265,7 @@ def run_experiment(config: ExperimentConfig) -> dict[str, object]:
         )
 
         epoch_logs: list[dict[str, float | int]] = []
+        replay_draws: Counter[int] = Counter()
         for epoch in range(config.epochs_per_task):
             loss, train_accuracy = train_epoch(
                 model=model,
@@ -253,6 +277,7 @@ def run_experiment(config: ExperimentConfig) -> dict[str, object]:
                 replay_batch_size=config.replay_batch_size,
                 ewc=ewc,
                 ewc_lambda=config.ewc_lambda,
+                replay_draws=replay_draws,
             )
             epoch_logs.append({"epoch": epoch + 1, "loss": loss, "train_accuracy": train_accuracy})
             print(
@@ -295,6 +320,26 @@ def run_experiment(config: ExperimentConfig) -> dict[str, object]:
             )
             add_dataset_to_buffer(replay_buffer, buffer_loader)
 
+        # Replay diagnostics per earlier task: draws while training this task, and the
+        # buffer composition and mean priority after adding this task's examples.
+        replay_by_task: list[dict[str, float | int]] = []
+        if replay_buffer is not None:
+            label_to_task = {class_id: index for index, other in enumerate(stream.specs) for class_id in other.class_ids}
+            for index in range(task_index + 1):
+                slot_priorities = [
+                    priority
+                    for label, priority in zip(replay_buffer.labels, replay_buffer.priorities)
+                    if label_to_task[label] == index
+                ]
+                replay_by_task.append(
+                    {
+                        "task": index + 1,
+                        "draws": sum(count for label, count in replay_draws.items() if label_to_task[label] == index),
+                        "buffer_slots": len(slot_priorities),
+                        "mean_priority": sum(slot_priorities) / len(slot_priorities) if slot_priorities else 0.0,
+                    }
+                )
+
         learned_accuracies = [accuracy_matrix[task_index][index] for index in range(task_index + 1)]
         print(
             "eval=" + ", ".join(f"T{index + 1}:{accuracy:.4f}" for index, accuracy in enumerate(learned_accuracies)),
@@ -307,6 +352,7 @@ def run_experiment(config: ExperimentConfig) -> dict[str, object]:
                 "epochs": epoch_logs,
                 "replay_buffer_size": len(replay_buffer) if replay_buffer is not None else 0,
                 "fisher_samples": fisher_count,
+                "replay_by_task": replay_by_task,
             }
         )
 
@@ -359,6 +405,13 @@ def make_parser() -> argparse.ArgumentParser:
     parser.add_argument("--download", action="store_true")
     parser.add_argument("--buffer-size", type=int, default=2000)
     parser.add_argument("--replay-batch-size", type=int, default=64)
+    parser.add_argument(
+        "--replay-sampling",
+        choices=("uniform", "loss"),
+        default="uniform",
+        help="how replay examples are drawn from the buffer; storage is always reservoir sampling",
+    )
+    parser.add_argument("--priority-alpha", type=float, default=0.6, help="loss-priority exponent for --replay-sampling loss")
     parser.add_argument("--ewc-lambda", type=float, default=10.0)
     parser.add_argument("--ewc-decay", type=float, default=0.9)
     parser.add_argument("--fisher-samples", type=int, default=1024)

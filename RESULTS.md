@@ -114,6 +114,31 @@ examples，而不是 interleaving 本身。`equal-budget` 模式让每个 curren
 数据：`runs/tee-zhang-2023/equal-budget/`、`runs/tee-zhang-2023/wsl-platform-check/released-code/`、
 `runs/tee-zhang-2023/equal-budget-comparison/`；分析脚本 `tools/analyze_tee_zhang_equal_budget.py`。
 
+## Replay 采样策略：uniform vs loss 优先级（2026-09-29）
+
+预注册协议见 [docs/REPLAY_SAMPLING_PLAN.md](docs/REPLAY_SAMPLING_PLAN.md)。buffer 固定为 2,000（reservoir 存储），
+每步回放 64 个样本；两组只在"从 buffer 抽哪些样本"上不同。`loss` 组采用 prioritized replay：
+优先级 `(最近回放 loss + 1e-3) ** 0.6`，加权不放回抽样，新样本取当前最大优先级，α 在实验前固定。
+两组都在 WSL 上按 seed `0–7` 配对运行（16 组；第一阶段 n = 3 的差值为 −0.00 pp，按预注册规则扩展到 8 个 seed）。
+
+| 策略 | 最终平均准确率 | 最终平均遗忘 |
+|---|---:|---:|
+| uniform | 17.14% ± 1.66% | 55.05% ± 2.07% |
+| loss | 17.74% ± 1.19% | 54.03% ± 1.79% |
+| 配对差值 loss − uniform (95% CI) | +0.59 pp [−0.98, +2.17]，p = 0.40 | −1.01 pp [−2.56, +0.53]，p = 0.16 |
+
+结论：
+
+- 没有检测到 loss 优先级采样的收益。效应被限制在约 −1 到 +2 个百分点之间；要把 CI 缩到 ±1 个百分点，
+  按当前配对差值的标准差（约 1.9 个百分点）估计需要约 15–20 个 seed。
+- 机制诊断解释了原因：训练 task 10 时，task 1–8 在 buffer 中的平均优先级只有 0.058（uniform 为 1），
+  即模型对 buffer 中的样本 loss 已接近 0——2,000 个样本被记住了，buffer 上的 loss 不再反映测试集上的遗忘。
+  优先级因此几乎只把抽样推向最近的旧任务：task 9 的回放份额从 11.3% ± 0.6% 升到 17.1% ± 1.0%。
+- WSL 上 uniform 组 8 个 seed 的 17.14% 与早先 Windows 三 seed 的 16.85% ± 1.18% 一致。
+
+数据：`runs/replay-sampling/`（`summary.json` 含配对统计，`task_logs[*].replay_by_task` 含逐任务诊断）；
+runner：`run_replay_sampling.py`。
+
 ## 实验设置
 
 - 数据集：CIFAR-100，50,000 张训练图和 10,000 张测试图。
@@ -198,8 +223,9 @@ EWC-10 数值稳定，但最终表现和 Naive 接近。一个合理解释是：
 
 优先级从高到低：
 
-1. 把 buffer 改为紧凑 uint8 原图存储，并在 replay 时动态增强，比较准确率、显存/内存和训练时间。
-2. 加入 LwF 或 DER++，观察蒸馏/日志回放能否优于纯样本 Replay。
-3. EWC 小范围搜索 `lambda = 0.1 / 1 / 10 / 100` 与更低学习率。
-4. 为方法间对比补足多 seed，并进行配对统计分析。
-5. 把结论整理成 2–4 页短报告。
+1. 换一个不会被 buffer 记忆掩盖的优先级信号（例如对增强视图计算 loss，或统计遗忘事件次数），重做 uniform 对照。
+2. 把 buffer 改为紧凑 uint8 原图存储，并在 replay 时动态增强，比较准确率、显存/内存和训练时间。
+3. 加入 LwF 或 DER++，观察蒸馏/日志回放能否优于纯样本 Replay。
+4. EWC 小范围搜索 `lambda = 0.1 / 1 / 10 / 100` 与更低学习率。
+5. 为方法间对比补足多 seed，并进行配对统计分析。
+6. 把结论整理成 2–4 页短报告。

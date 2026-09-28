@@ -27,7 +27,10 @@ COMPARISON_FIELDS = (
     "buffer_size",
     "deterministic",
     "max_train_samples_per_task",
+    "replay_sampling",
 )
+# Results written before a field existed are read with its original behavior.
+LEGACY_DEFAULTS = {"replay_sampling": "uniform"}
 
 
 def read_result(path: Path) -> dict[str, object] | None:
@@ -57,7 +60,10 @@ def matches(result: dict[str, object], expected: dict[str, object]) -> bool:
     config = result["config"]
     if not isinstance(config, dict):
         return False
-    return all(config.get(field) == expected[field] for field in COMPARISON_FIELDS)
+    return all(
+        config.get(field, LEGACY_DEFAULTS.get(field)) == expected.get(field, LEGACY_DEFAULTS.get(field))
+        for field in COMPARISON_FIELDS
+    )
 
 
 def summarize_records(results: list[dict[str, object]]) -> list[dict[str, object]]:
@@ -240,6 +246,7 @@ def expected_config(args: argparse.Namespace, buffer_size: int, seed: int) -> di
         "buffer_size": buffer_size,
         "deterministic": True,
         "max_train_samples_per_task": None,
+        "replay_sampling": "uniform",
     }
 
 
