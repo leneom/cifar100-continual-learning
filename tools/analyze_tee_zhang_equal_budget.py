@@ -79,7 +79,7 @@ def main() -> None:
     parser.add_argument("--baseline-root", default="runs/tee-zhang-2023/wsl-platform-check",
                         help="root holding released-code/ runs from the same platform as the equal-budget arm")
     parser.add_argument("--equal-budget-root", default="runs/tee-zhang-2023")
-    parser.add_argument("--division1-root", default="runs/tee-zhang-2023",
+    parser.add_argument("--division1-root", default="runs/tee-zhang-2023/wsl-platform-check",
                         help="root holding released-code/division-001 (identical sequence under both implementations)")
     parser.add_argument("--divisions", type=int, nargs="+", default=[120, 300])
     parser.add_argument("--seeds", type=int, nargs="+", default=[0, 1, 2, 3])

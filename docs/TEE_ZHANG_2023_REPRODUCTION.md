@@ -233,6 +233,18 @@ paired statistics in `runs/tee-zhang-2023/equal-budget-comparison/`).
 | 300 | -0.10 pp [-0.40, +0.20] | +0.17 pp [-1.10, +1.44] |
 
 The duplicate tail has no detectable effect, and the equal-budget arms still
-exceed division 1 by 6.64 / 6.66 pp in accuracy. The division-120 benefit is
-therefore attributable to interleaving rather than unequal current-sample
-counts. Remaining reproduction gap: divisions 8 and 60.
+exceed the same-seed WSL division 1 by 6.36 / 6.39 pp in accuracy. The
+division-120 benefit is therefore attributable to interleaving rather than
+unequal current-sample counts.
+
+### Full curve on WSL (2026-09-28 to 09-29)
+
+Divisions 8 and 60 were added and division 1 rerun under WSL, so all five
+Table 1 divisions have released-code seeds 0-7 on one platform
+(`runs/tee-zhang-2023/wsl-platform-check/released-code/`, summary in
+`runs/tee-zhang-2023/wsl-curve/`). Every accuracy mean is within 0.44 pp of the
+paper. Four seeds could not separate division 8 from division 1
+(+0.41 pp [-0.39, +1.21]); eight seeds resolve a +0.40 pp [+0.08, +0.71] gain,
+half the paper's +0.8 pp. `F` stays 0.8-1.3 pp above the paper at divisions
+1, 8 and 120. The division-1 WSL runs also replace the Windows reference in the
+equal-budget analysis. The paper reproduction is complete.

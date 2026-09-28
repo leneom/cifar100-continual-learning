@@ -35,7 +35,7 @@ seed 的样本标准差，`F` 越低越好：
 
 这批结果支持“成功复现所选 Table 1 条件及其相对排序”，但仍有三个边界：
 
-- 只覆盖论文五个 divisions 中的 `1 / 120 / 300`，尚未运行 `8 / 60`；
+- 这 12 组只覆盖 `1 / 120 / 300`；`8 / 60` 已在下文的 WSL 完整曲线中补齐；
 - 论文附录写 72×72，而发布代码实际使用 74×74，本次遵循发布代码；
 - 发布代码在 division 120/300 下分别每 epoch 重复 90/150 个 current examples。
   这一混淆已由下面的 equal-budget 对照实验排除。
@@ -66,14 +66,51 @@ examples，而不是 interleaving 本身。`equal-budget` 模式让每个 curren
 
 - 重复样本没有可检测的效应。两个 division 的 Avg Acc 配对差值都是 −0.10 个百分点，
   95% CI 把效应限制在约 ±0.5 个百分点以内；精确符号翻转检验 p = 0.66 / 0.45。
-- 移除重复样本后，interleaving 的收益依然存在：equal-budget division 120/300 比
-  division 1（39.59%）高 6.64 / 6.66 个百分点，`F` 低 8.77 / 8.87 个百分点。division 1
-  参考值来自 Windows 的四 seed 结果，跨平台噪声约 1.6 个百分点，远小于这一差距。
+- 移除重复样本后，interleaving 的收益依然存在：与同平台、同 seed 的 division 1 配对，
+  equal-budget division 120/300 的 Avg Acc 高 6.36 / 6.39 个百分点，`F` 低 9.15 / 9.25
+  个百分点（8/8 seed 同向，符号翻转检验 p = 0.008）。
 - division 300 相比 120 依然没有额外收益（46.25% 对 46.23%），与论文的平台期一致。
 - n = 4 时 division 300 曾出现 −0.39 pp 的差值（4/4 为负），扩展到 8 个 seed 后消失，
   说明这一协议下小于约 1 个百分点的单次差异不应解读。
 
 因此，论文所说的 interleaving 收益可以归因于 interleaving 本身，而不是发布代码的样本数量差异。
+
+## 完整 Table 1 曲线（WSL，2026-09-28 至 09-29）
+
+在同一平台（WSL）上用 released-code 补齐 divisions `8 / 60`，并重跑 division 1，
+五个 division 各 8 个 seed（共 40 组，全部 20×20 矩阵、无 NaN/Infinity、错误日志为空）。
+
+| Division | 复现 Avg Acc | 论文 Avg Acc | 差值 | 复现 F | 论文 F | 差值 |
+|---:|---:|---:|---:|---:|---:|---:|
+| 1 | 39.86% ± 0.63% | 39.9% | −0.04 pp | 65.07% ± 1.61% | 63.9% | +1.17 pp |
+| 8 | 40.26% ± 0.62% | 40.7% | −0.44 pp | 63.85% ± 0.91% | 62.6% | +1.25 pp |
+| 60 | 44.90% ± 0.37% | 44.6% | +0.30 pp | 57.47% ± 1.05% | 57.4% | +0.07 pp |
+| 120 | 46.33% ± 0.84% | 46.6% | −0.27 pp | 55.90% ± 1.48% | 55.1% | +0.80 pp |
+| 300 | 46.35% ± 0.52% | 46.6% | −0.25 pp | 55.65% ± 1.40% | 56.1% | −0.45 pp |
+
+![WSL full curve](report/figures/tee_zhang_2023_wsl_curve.png)
+
+相邻 division 的配对差值（n = 8，95% CI）：
+
+| 比较 | Avg Acc 差值 | F 差值 |
+|---|---:|---:|
+| 8 − 1 | +0.40 pp [+0.08, +0.71]，p = 0.023 | −1.22 pp [−2.66, +0.22]，p = 0.094 |
+| 60 − 8 | +4.65 pp [+4.24, +5.05]，p = 0.008 | −6.38 pp [−7.49, −5.26]，p = 0.008 |
+| 120 − 60 | +1.42 pp [+0.93, +1.91]，p = 0.008 | −1.57 pp [−2.50, −0.65]，p = 0.008 |
+| 300 − 120 | +0.02 pp [−0.52, +0.57]，p = 0.930 | −0.25 pp [−1.48, +0.97]，p = 0.750 |
+
+结论：
+
+- 五个 division 的 Avg Acc 与论文相差都在 0.44 个百分点以内，完整复现了 Table 1 的曲线：
+  division 1→8 只有很小的提升，8→60 是主要跃升，60→120 继续显著提高，120→300 进入平台。
+- division 8 相对 1 的提升（+0.40 pp）在统计上可检测，但只有论文 +0.8 pp 的一半；用四个 seed
+  时 CI 跨过 0（+0.41 pp [−0.39, +1.21]），需要八个 seed 才能分辨。
+- `F` 在 division 1/8/120 上比论文高 0.8–1.3 个百分点，与 Windows 复现的方向一致，是一个
+  小而稳定的系统性偏移；Avg Acc 没有对应的偏移。
+- WSL 的 division 1（39.86%）与 Windows 四 seed 均值（39.59%）相差 0.27 个百分点，在 seed 噪声范围内。
+
+数据：`runs/tee-zhang-2023/wsl-platform-check/released-code/`、`runs/tee-zhang-2023/wsl-curve/`；
+分析脚本 `tools/analyze_tee_zhang_curve.py`。
 数据：`runs/tee-zhang-2023/equal-budget/`、`runs/tee-zhang-2023/wsl-platform-check/released-code/`、
 `runs/tee-zhang-2023/equal-budget-comparison/`；分析脚本 `tools/analyze_tee_zhang_equal_budget.py`。
 

@@ -4,7 +4,7 @@
 
 Independent reproduction note prepared for research discussion
 
-August 2026; equal-budget control added September 2026
+August 2026; equal-budget control and full curve added September 2026
 
 ## Executive summary
 
@@ -36,8 +36,10 @@ minus paper, measured in percentage points.
 A follow-up equal-budget control (32 WSL runs, paired seeds `0-7`) removes the
 released code's duplicate current-task tail. The paired accuracy change is
 -0.10 pp at both division 120 and 300 (95% CIs within +/-0.6 pp), while both
-divisions still exceed division 1 by about 6.6 pp. The interleaving gain is
-therefore not an artifact of unequal sample counts.
+divisions still exceed division 1 by about 6.4 pp. The interleaving gain is
+therefore not an artifact of unequal sample counts. A same-platform rerun of
+all five Table 1 divisions with eight seeds each recovers the full curve, with
+every accuracy mean within 0.44 pp of the paper.
 
 ## Experimental protocol
 
@@ -93,11 +95,10 @@ The paper appendix states 72x72, while the released `VaryDiv.py` uses 74x74.
 This reproduction follows the released code and records image size 74 in every
 result.
 
-### Bounded division set
+### Bounded division set (resolved)
 
-The experiment tests three of the five reported divisions. Divisions 8 and 60
-remain untested. The selected conditions test the main qualitative claims but
-do not reconstruct the full curve.
+The Windows matrix tests three of the five reported divisions. Divisions 8 and
+60 were added in the same-platform curve below.
 
 ### Runtime caveat
 
@@ -130,18 +131,49 @@ p = 0.66 (division 120) and 0.45 (division 300) for accuracy.
 
 1. The duplicate tail has no detectable effect; the accuracy effect is bounded
    to roughly +/-0.5 pp.
-2. Under equal budgets, divisions 120 and 300 exceed division 1 by 6.64 and
-   6.66 pp in accuracy and lower `F` by 8.77 and 8.87 pp. The division-1
-   reference is the Windows four-seed mean; cross-platform noise (about 1.6 pp)
-   is far smaller than this gap.
+2. Under equal budgets, divisions 120 and 300 exceed the same-seed WSL
+   division 1 by 6.36 and 6.39 pp in accuracy and lower `F` by 9.15 and
+   9.25 pp (8/8 seeds, sign-flip p = 0.008).
 3. Division 300 again adds nothing over division 120, matching the plateau.
 4. With four seeds, division 300 briefly showed a -0.39 pp difference (4/4
    negative) that vanished at eight seeds. Single-run differences below about
    1 pp should not be interpreted under this protocol.
 
+## Full Table 1 curve (WSL)
+
+All five divisions were run under WSL in `released-code` mode with seeds `0-7`
+(40 runs; division 1 rerun so that every point shares one platform).
+
+| Division | Reproduction Avg Acc | Paper Avg Acc | Delta | Reproduction F | Paper F | Delta |
+|---:|---:|---:|---:|---:|---:|---:|
+| 1 | 39.86% +/- 0.63% | 39.9% | -0.04 pp | 65.07% +/- 1.61% | 63.9% | +1.17 pp |
+| 8 | 40.26% +/- 0.62% | 40.7% | -0.44 pp | 63.85% +/- 0.91% | 62.6% | +1.25 pp |
+| 60 | 44.90% +/- 0.37% | 44.6% | +0.30 pp | 57.47% +/- 1.05% | 57.4% | +0.07 pp |
+| 120 | 46.33% +/- 0.84% | 46.6% | -0.27 pp | 55.90% +/- 1.48% | 55.1% | +0.80 pp |
+| 300 | 46.35% +/- 0.52% | 46.6% | -0.25 pp | 55.65% +/- 1.40% | 56.1% | -0.45 pp |
+
+![Full Table 1 curve](figures/tee_zhang_2023_wsl_curve.png)
+
+Paired differences between adjacent divisions (n = 8, 95% CI):
+
+| Comparison | Avg Acc diff | F diff |
+|---|---:|---:|
+| 8 - 1 | +0.40 pp [+0.08, +0.71], p = 0.023 | -1.22 pp [-2.66, +0.22], p = 0.094 |
+| 60 - 8 | +4.65 pp [+4.24, +5.05], p = 0.008 | -6.38 pp [-7.49, -5.26], p = 0.008 |
+| 120 - 60 | +1.42 pp [+0.93, +1.91], p = 0.008 | -1.57 pp [-2.50, -0.65], p = 0.008 |
+| 300 - 120 | +0.02 pp [-0.52, +0.57], p = 0.930 | -0.25 pp [-1.48, +0.97], p = 0.750 |
+
+1. The full shape is recovered: a small step from division 1 to 8, the main
+   jump from 8 to 60, a further significant gain to 120, and a plateau at 300.
+2. The division 8 gain (+0.40 pp) is detectable but half the paper's +0.8 pp.
+   With four seeds its interval still crossed zero (+0.41 pp [-0.39, +1.21]).
+3. `F` sits 0.8-1.3 pp above the paper at divisions 1, 8 and 120, matching
+   the direction seen on Windows, with no corresponding accuracy offset.
+
 ## Evidence integrity
 
-- 12/12 planned main-matrix cells and 32/32 equal-budget control cells completed.
+- 12/12 main-matrix cells (Windows), 32/32 equal-budget control cells and
+  40/40 full-curve cells (WSL; the division 120/300 released-code runs are shared) completed.
 - Every run stores a 20x20 accuracy matrix.
 - No NaN or Infinity occurs in the JSON or CSV evidence.
 - The final controller exited with code 0 and empty error logs.
@@ -170,6 +202,14 @@ python run_tee_zhang_2023_matrix.py --sequence-implementation equal-budget \
 python run_tee_zhang_2023_matrix.py --output-root runs/tee-zhang-2023/wsl-platform-check \
   --sequence-implementation released-code --divisions 120 300 --seeds 0 1 2 3 4 5 6 7
 python tools/analyze_tee_zhang_equal_budget.py --seeds 0 1 2 3 4 5 6 7
+```
+
+Full curve (WSL):
+
+```bash
+python run_tee_zhang_2023_matrix.py --output-root runs/tee-zhang-2023/wsl-platform-check \
+  --sequence-implementation released-code --divisions 1 8 60 120 300 --seeds 0 1 2 3 4 5 6 7
+python tools/analyze_tee_zhang_curve.py
 ```
 
 The runner validates matching configurations, skips completed cells, and

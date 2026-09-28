@@ -1,6 +1,45 @@
 [
   {
     "implementation": "released-code",
+    "division": 1,
+    "completed_seeds": "0 1 2 3 4 5 6 7",
+    "n": 8,
+    "average_accuracy_mean": 0.3986318460102956,
+    "average_accuracy_std": 0.006313997136605523,
+    "paper_average_accuracy": 0.399,
+    "forgetfulness_mean": 0.6507016409452795,
+    "forgetfulness_std": 0.01613835017427081,
+    "paper_forgetfulness": 0.639,
+    "elapsed_seconds_mean": 2641.202264943251
+  },
+  {
+    "implementation": "released-code",
+    "division": 8,
+    "completed_seeds": "0 1 2 3 4 5 6 7",
+    "n": 8,
+    "average_accuracy_mean": 0.4025836622263078,
+    "average_accuracy_std": 0.006224257086487383,
+    "paper_average_accuracy": 0.407,
+    "forgetfulness_mean": 0.638520132276835,
+    "forgetfulness_std": 0.009144305224561913,
+    "paper_forgetfulness": 0.626,
+    "elapsed_seconds_mean": 2268.2130222458745
+  },
+  {
+    "implementation": "released-code",
+    "division": 60,
+    "completed_seeds": "0 1 2 3 4 5 6 7",
+    "n": 8,
+    "average_accuracy_mean": 0.44904079291064974,
+    "average_accuracy_std": 0.003660102408291486,
+    "paper_average_accuracy": 0.446,
+    "forgetfulness_mean": 0.5747370474515133,
+    "forgetfulness_std": 0.01054317583210825,
+    "paper_forgetfulness": 0.574,
+    "elapsed_seconds_mean": 1610.2022769476243
+  },
+  {
+    "implementation": "released-code",
     "division": 120,
     "completed_seeds": "0 1 2 3 4 5 6 7",
     "n": 8,

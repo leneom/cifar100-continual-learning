@@ -36,7 +36,7 @@ All six reproduced headline metrics are within 0.79 percentage points of the pap
 
 ### Equal-budget control
 
-An `equal-budget` sensitivity matrix removes the duplicate tail so that every current and replay example appears exactly once per epoch. Windows and WSL runs are not bit-identical (CPU bicubic resize rounding shifts a single seed by up to 1.6 pp), so both arms were rerun on WSL with paired seeds `0–7` (32 runs). Division 1 is identical under both implementations and was not rerun.
+An `equal-budget` sensitivity matrix removes the duplicate tail so that every current and replay example appears exactly once per epoch. Windows and WSL runs are not bit-identical (CPU bicubic resize rounding shifts a single seed by up to 1.6 pp), so both arms were rerun on WSL with paired seeds `0–7` (32 runs). Division 1 is identical under both implementations, so its WSL runs serve as the shared reference.
 
 | Division | released-code Avg Acc | equal-budget Avg Acc | Paired diff (95% CI) | released-code F | equal-budget F | Paired diff (95% CI) |
 |---:|---:|---:|---:|---:|---:|---:|
@@ -45,7 +45,24 @@ An `equal-budget` sensitivity matrix removes the duplicate tail so that every cu
 
 ![Equal-budget paired comparison](report/figures/tee_zhang_2023_equal_budget.png)
 
-The duplicate tail has no detectable effect: the paired accuracy difference is bounded to roughly ±0.5 pp. Under equal budgets, divisions 120 and 300 still exceed division 1 (39.59%) by 6.64 and 6.66 pp and lower F by 8.77 and 8.87 pp, so the paper's interleaving gain is attributable to interleaving rather than unequal sample counts. Analysis: `tools/analyze_tee_zhang_equal_budget.py`; paired results in `runs/tee-zhang-2023/equal-budget-comparison/`.
+The duplicate tail has no detectable effect: the paired accuracy difference is bounded to roughly ±0.5 pp. Under equal budgets, divisions 120 and 300 still exceed the same-seed WSL division 1 by 6.36 and 6.39 pp and lower F by 9.15 and 9.25 pp (8/8 seeds), so the paper's interleaving gain is attributable to interleaving rather than unequal sample counts. Analysis: `tools/analyze_tee_zhang_equal_budget.py`; paired results in `runs/tee-zhang-2023/equal-budget-comparison/`.
+
+### Full Table 1 curve (same platform)
+
+Divisions `8 / 60` were added and division 1 rerun on WSL, giving all five Table 1 divisions with seeds `0–7` (40 released-code runs).
+
+| Division | Reproduction Avg Acc | Paper Avg Acc | Reproduction F | Paper F |
+|---:|---:|---:|---:|---:|
+| 1 | 39.86% ± 0.63% | 39.9% | 65.07% ± 1.61% | 63.9% |
+| 8 | 40.26% ± 0.62% | 40.7% | 63.85% ± 0.91% | 62.6% |
+| 60 | 44.90% ± 0.37% | 44.6% | 57.47% ± 1.05% | 57.4% |
+| 120 | 46.33% ± 0.84% | 46.6% | 55.90% ± 1.48% | 55.1% |
+| 300 | 46.35% ± 0.52% | 46.6% | 55.65% ± 1.40% | 56.1% |
+
+![Full Table 1 curve](report/figures/tee_zhang_2023_wsl_curve.png)
+
+Every accuracy mean is within 0.44 pp of the paper and the full shape is recovered. Paired over seeds, accuracy rises by +0.40 pp from division 1 to 8 (95% CI [+0.08, +0.71]; half the paper's +0.8 pp and only resolvable with eight seeds), +4.65 pp from 8 to 60, +1.42 pp from 60 to 120, and plateaus from 120 to 300 (+0.02 pp [−0.52, +0.57]). F is 0.8–1.3 pp above the paper at divisions 1, 8 and 120, a small consistent offset also seen in the Windows runs. Analysis: `tools/analyze_tee_zhang_curve.py`; summary in `runs/tee-zhang-2023/wsl-curve/`.
+
 
 See the [protocol and audit](docs/TEE_ZHANG_2023_REPRODUCTION.md), [editable reproduction report](report/TEE_ZHANG_2023_REPRODUCTION_REPORT.md), and [machine-readable summary](runs/tee-zhang-2023/released-code/summary.csv). The local PDF can be regenerated with `python tools/build_tee_zhang_reproduction_report.py`.
 
@@ -139,6 +156,6 @@ RESULTS.md                Detailed observations, failures, and limitations
 
 ## Next research step
 
-The equal-budget control is complete and supports the interleaving interpretation. The remaining paper-reproduction gap is divisions `8 / 60`, which would reconstruct the full Table 1 curve. The broader method-level extension fixes the buffer at 2,000 examples and compares uniform replay with one curriculum- or importance-aware sampling policy. DER++ remains a useful secondary baseline, while a separate systems experiment will test compact `uint8` storage with dynamic replay-time augmentation.
+The paper reproduction is now complete: the full Table 1 curve is recovered on one platform, and the equal-budget control supports the interleaving interpretation. The next step is method-level: fix the buffer at 2,000 examples and compares uniform replay with one curriculum- or importance-aware sampling policy. DER++ remains a useful secondary baseline, while a separate systems experiment will test compact `uint8` storage with dynamic replay-time augmentation.
 
 This repository is an independent learning-and-research project intended to demonstrate a complete experimental workflow: formulate a question, implement baselines, control comparisons, retain failed runs, quantify uncertainty, and state the limits of the evidence.
