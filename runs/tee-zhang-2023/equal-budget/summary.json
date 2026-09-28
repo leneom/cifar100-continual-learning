@@ -1,0 +1,28 @@
+[
+  {
+    "implementation": "equal-budget",
+    "division": 120,
+    "completed_seeds": "0 1 2 3 4 5 6 7",
+    "n": 8,
+    "average_accuracy_mean": 0.4622667206901393,
+    "average_accuracy_std": 0.004241464884767353,
+    "paper_average_accuracy": 0.466,
+    "forgetfulness_mean": 0.5591609371231733,
+    "forgetfulness_std": 0.014732343681051058,
+    "paper_forgetfulness": 0.551,
+    "elapsed_seconds_mean": 1467.306749661501
+  },
+  {
+    "implementation": "equal-budget",
+    "division": 300,
+    "completed_seeds": "0 1 2 3 4 5 6 7",
+    "n": 8,
+    "average_accuracy_mean": 0.46251749157087535,
+    "average_accuracy_std": 0.006005513262452727,
+    "paper_average_accuracy": 0.466,
+    "forgetfulness_mean": 0.5582171076842432,
+    "forgetfulness_std": 0.008833063334861396,
+    "paper_forgetfulness": 0.561,
+    "elapsed_seconds_mean": 2101.7596732727493
+  }
+]

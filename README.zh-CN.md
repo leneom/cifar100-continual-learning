@@ -30,10 +30,28 @@
 | 300 | 46.38% ± 0.55% | 46.6% | 56.70% ± 1.07% | 56.1% |
 
 六项 headline metrics 与论文的最大差距为 0.79 个百分点，并复现了 division 120
-优于 division 1、division 300 不再提高准确率的主趋势。发布代码存在 duplicate-tail
-sample-count confound，所以下一步是运行 paired-seed `equal-budget` sensitivity matrix。
+优于 division 1、division 300 不再提高准确率的主趋势。
 
 ![论文值与四 seed 复现值](report/figures/tee_zhang_2023_paper_comparison.png)
+
+### Equal-budget 对照实验
+
+发布代码在 division 120/300 下每 epoch 多呈现 90/150 个 current examples。`equal-budget`
+模式让每个样本每 epoch 恰好出现一次。Windows 与 WSL 的结果不逐位一致（CPU bicubic
+resize 的浮点舍入不同，同一 seed 可相差 1.6 个百分点），因此两组都在 WSL 上按 seed
+`0–7` 配对重跑（共 32 组）。division 1 在两种模式下序列相同，不需要重跑。
+
+| Division | released-code Avg Acc | equal-budget Avg Acc | 配对差值 (95% CI) | released-code F | equal-budget F | 配对差值 (95% CI) |
+|---:|---:|---:|---:|---:|---:|---:|
+| 120 | 46.33% ± 0.84% | 46.23% ± 0.42% | −0.10 pp [−0.59, +0.39] | 55.90% ± 1.48% | 55.92% ± 1.47% | +0.01 pp [−1.59, +1.62] |
+| 300 | 46.35% ± 0.52% | 46.25% ± 0.60% | −0.10 pp [−0.40, +0.20] | 55.65% ± 1.40% | 55.82% ± 0.88% | +0.17 pp [−1.10, +1.44] |
+
+![Equal-budget 配对对比](report/figures/tee_zhang_2023_equal_budget.png)
+
+重复样本没有可检测的效应，Avg Acc 配对差值被限制在约 ±0.5 个百分点以内。在相同样本预算下，
+division 120/300 仍比 division 1（39.59%）高 6.64 / 6.66 个百分点，`F` 低 8.77 / 8.87 个百分点，
+因此论文的 interleaving 收益来自 interleaving 本身，而不是样本数量差异。分析脚本：
+`tools/analyze_tee_zhang_equal_budget.py`。
 
 ## 项目实现
 
@@ -64,4 +82,4 @@ conda run --no-capture-output -n ece488_clip python run_replay_ablation.py --buf
 
 ## 后续研究
 
-当前优先运行 divisions `1 / 120 / 300` 的 `equal-budget` paired-seed sensitivity matrix，移除发布代码中的 duplicate-tail 样本数量混淆。之后再把 buffer 固定为 2,000，在相同随机种子和训练预算下比较均匀回放与一种课程式或重要性采样策略，从“存多少样本”推进到“应回放哪些样本”。DER++ 保留为第二基线；另一个工程方向是将 ReplayBuffer 改为紧凑 `uint8` 原图存储，并在 replay 时动态增强。
+`equal-budget` 对照实验已完成，结果支持 interleaving 解释；论文复现剩下的缺口是 divisions `8 / 60`。方法层面的下一步是把 buffer 固定为 2,000，在相同随机种子和训练预算下比较均匀回放与一种课程式或重要性采样策略，从“存多少样本”推进到“应回放哪些样本”。DER++ 保留为第二基线；另一个工程方向是将 ReplayBuffer 改为紧凑 `uint8` 原图存储，并在 replay 时动态增强。

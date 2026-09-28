@@ -1,0 +1,28 @@
+[
+  {
+    "implementation": "released-code",
+    "division": 120,
+    "completed_seeds": "0 1 2 3 4 5 6 7",
+    "n": 8,
+    "average_accuracy_mean": 0.4632653594227303,
+    "average_accuracy_std": 0.00836156413598409,
+    "paper_average_accuracy": 0.466,
+    "forgetfulness_mean": 0.5590196939732406,
+    "forgetfulness_std": 0.014817062288934034,
+    "paper_forgetfulness": 0.551,
+    "elapsed_seconds_mean": 1549.7677030980008
+  },
+  {
+    "implementation": "released-code",
+    "division": 300,
+    "completed_seeds": "0 1 2 3 4 5 6 7",
+    "n": 8,
+    "average_accuracy_mean": 0.4635100606955072,
+    "average_accuracy_std": 0.005225904585032635,
+    "paper_average_accuracy": 0.466,
+    "forgetfulness_mean": 0.5564851138704293,
+    "forgetfulness_std": 0.014032500163362839,
+    "paper_forgetfulness": 0.561,
+    "elapsed_seconds_mean": 1925.54109007825
+  }
+]

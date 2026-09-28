@@ -34,6 +34,11 @@ OUTPUT_DIR = ROOT / "output" / "pdf"
 OUTPUT_PDF = OUTPUT_DIR / "tee_zhang_2023_reproduction_report.pdf"
 COMPARISON_FIGURE = FIGURE_DIR / "tee_zhang_2023_paper_comparison.png"
 SEED_FIGURE = FIGURE_DIR / "tee_zhang_2023_per_seed.png"
+# Equal-budget sensitivity: both arms run under WSL (see docs/TEE_ZHANG_2023_REPRODUCTION.md).
+WSL_RELEASED_ROOT = ROOT / "runs" / "tee-zhang-2023" / "wsl-platform-check" / "released-code"
+EQUAL_BUDGET_ROOT = ROOT / "runs" / "tee-zhang-2023" / "equal-budget"
+EQUAL_BUDGET_FIGURE = FIGURE_DIR / "tee_zhang_2023_equal_budget.png"
+EQUAL_BUDGET_COMPARISON = ROOT / "runs" / "tee-zhang-2023" / "equal-budget-comparison" / "comparison.json"
 
 NAVY = colors.HexColor("#16324F")
 BLUE = colors.HexColor("#2E74B5")
@@ -57,6 +62,12 @@ PIL_LIGHT_GRAY = "#F2F4F7"
 PIL_BORDER = "#C9D2DC"
 PIL_INK = "#111827"
 PIL_WHITE = "#FFFFFF"
+
+# Windows fonts, also reachable from WSL through the /mnt/c mount.
+FONT_DIR = next(
+    (path for path in (Path("C:/Windows/Fonts"), Path("/mnt/c/Windows/Fonts")) if path.exists()),
+    Path("C:/Windows/Fonts"),
+)
 
 
 def load_json(path: Path) -> dict | list:
@@ -103,8 +114,8 @@ def load_results() -> tuple[list[dict], list[dict]]:
 
 def pil_font(size: int, bold: bool = False) -> ImageFont.FreeTypeFont:
     candidates = [
-        Path("C:/Windows/Fonts/arialbd.ttf" if bold else "C:/Windows/Fonts/arial.ttf"),
-        Path("C:/Windows/Fonts/segoeuib.ttf" if bold else "C:/Windows/Fonts/segoeui.ttf"),
+        Path(FONT_DIR, "arialbd.ttf" if bold else "arial.ttf"),
+        Path(FONT_DIR, "segoeuib.ttf" if bold else "segoeui.ttf"),
     ]
     for candidate in candidates:
         if candidate.exists():
@@ -323,9 +334,114 @@ def build_seed_figure(rows: list[dict]) -> None:
     canvas.save(SEED_FIGURE, quality=95)
 
 
+def load_arm_metrics(root: Path, division: int) -> dict[int, dict[str, float]]:
+    metrics = {}
+    for path in sorted((root / f"division-{division:03d}").glob("seed-*/results.json")):
+        result = load_json(path)
+        metrics[int(result["config"]["seed"])] = {
+            "average_accuracy": float(result["metrics"]["continual_average_accuracy"]),
+            "forgetfulness": float(result["metrics"]["forgetfulness"]),
+        }
+    return metrics
+
+
+def draw_paired_panel(
+    draw: ImageDraw.ImageDraw,
+    box: tuple[int, int, int, int],
+    arms: dict[int, tuple[dict, dict]],
+    division1_mean: float,
+    *,
+    title: str,
+    key: str,
+    y_min: float,
+    y_max: float,
+) -> None:
+    left, top, right, bottom = box
+    draw.rounded_rectangle(box, radius=24, fill=PIL_WHITE, outline=PIL_BORDER, width=2)
+    title_font = pil_font(31, bold=True)
+    label_font = pil_font(20)
+    group_font = pil_font(22, bold=True)
+    draw.text((left + 34, top + 24), title, font=title_font, fill=PIL_NAVY)
+    plot_left, plot_right = left + 90, right - 38
+    plot_top, plot_bottom = top + 90, bottom - 110
+
+    def value_to_y(value: float) -> float:
+        return plot_bottom - (value - y_min) / (y_max - y_min) * (plot_bottom - plot_top)
+
+    for tick in range(7):
+        value = y_min + (y_max - y_min) * tick / 6
+        y = value_to_y(value)
+        draw.line((plot_left, y, plot_right, y), fill=PIL_LIGHT_GRAY, width=2)
+        draw.text((left + 25, y - 10), f"{value:.0f}", font=label_font, fill=PIL_MUTED)
+
+    reference_y = value_to_y(100 * division1_mean)
+    for x in range(plot_left, plot_right, 24):
+        draw.line((x, reference_y, min(x + 12, plot_right), reference_y), fill=PIL_MUTED, width=2)
+    draw.text((plot_left + 8, reference_y - 30), f"division 1: {100 * division1_mean:.1f}", font=label_font, fill=PIL_MUTED)
+
+    group_width = (plot_right - plot_left) / len(arms)
+    for group_index, (division, (released, equal)) in enumerate(sorted(arms.items())):
+        center = plot_left + group_width * (group_index + 0.5)
+        x_released, x_equal = center - group_width * 0.22, center + group_width * 0.22
+        for seed in sorted(set(released) & set(equal)):
+            draw.line(
+                (x_released, value_to_y(100 * released[seed][key]), x_equal, value_to_y(100 * equal[seed][key])),
+                fill=PIL_BORDER,
+                width=2,
+            )
+        for x, arm, color in ((x_released, released, PIL_ORANGE), (x_equal, equal, PIL_BLUE)):
+            values = [100 * run[key] for run in arm.values()]
+            if values:
+                mean_y = value_to_y(sum(values) / len(values))
+                draw.rounded_rectangle((x - 30, mean_y - 3, x + 30, mean_y + 3), radius=3, fill=color)
+                label = f"{sum(values) / len(values):.2f}"
+                text_center(draw, (x + (-62 if arm is released else 62), mean_y), label, label_font, PIL_INK)
+            for value in values:
+                y = value_to_y(value)
+                draw.ellipse((x - 8, y - 8, x + 8, y + 8), fill=color, outline=PIL_WHITE, width=2)
+        text_center(draw, (x_released, plot_bottom + 30), "released", label_font, PIL_INK)
+        text_center(draw, (x_equal, plot_bottom + 30), "equal-budget", label_font, PIL_INK)
+        text_center(draw, (center, plot_bottom + 70), f"division {division}", group_font, PIL_NAVY)
+
+
+def build_equal_budget_figure(summaries: list[dict]) -> bool:
+    arms = {}
+    for division in (120, 300):
+        released = load_arm_metrics(WSL_RELEASED_ROOT, division)
+        equal = load_arm_metrics(EQUAL_BUDGET_ROOT, division)
+        if released and equal:
+            arms[division] = (released, equal)
+    if not arms:
+        return False
+    division1 = next(row for row in summaries if row["division"] == 1)
+    canvas = PILImage.new("RGB", (1800, 900), PIL_WHITE)
+    draw = ImageDraw.Draw(canvas)
+    draw.text((70, 36), "Equal-budget sensitivity (same platform, paired seeds)", font=pil_font(42, bold=True), fill=PIL_NAVY)
+    draw.text(
+        (70, 92),
+        "Dots are seeds 0-7 (WSL), grey lines join the same seed, bars mark the mean. Division 1 reference: Windows, seeds 0-3.",
+        font=pil_font(23),
+        fill=PIL_MUTED,
+    )
+    draw_paired_panel(
+        draw, (55, 145, 885, 820), arms, division1["average_accuracy_mean"],
+        title="Continual average accuracy (%)", key="average_accuracy", y_min=38, y_max=50,
+    )
+    draw_paired_panel(
+        draw, (915, 145, 1745, 820), arms, division1["forgetfulness_mean"],
+        title="Forgetfulness F (%)", key="forgetfulness", y_min=50, y_max=68,
+    )
+    legend_font = pil_font(21)
+    for x, color, text in ((620, PIL_ORANGE, "released-code (duplicate tail)"), (1010, PIL_BLUE, "equal-budget")):
+        draw.ellipse((x, 850, x + 18, 868), fill=color)
+        draw.text((x + 30, 846), text, font=legend_font, fill=PIL_INK)
+    canvas.save(EQUAL_BUDGET_FIGURE, quality=95)
+    return True
+
+
 def register_fonts() -> tuple[str, str]:
-    regular = Path("C:/Windows/Fonts/arial.ttf")
-    bold = Path("C:/Windows/Fonts/arialbd.ttf")
+    regular = FONT_DIR / "arial.ttf"
+    bold = FONT_DIR / "arialbd.ttf"
     if regular.exists() and bold.exists():
         pdfmetrics.registerFont(TTFont("ReportSans", str(regular)))
         pdfmetrics.registerFont(TTFont("ReportSans-Bold", str(bold)))
@@ -464,7 +580,7 @@ def build_pdf(summaries: list[dict], rows: list[dict]) -> None:
             canvas.line(16 * mm, height - 11 * mm, width - 16 * mm, height - 11 * mm)
         canvas.setFont(regular_font, 7.5)
         canvas.setFillColor(MUTED)
-        canvas.drawString(16 * mm, 8 * mm, "Independent reproduction note - August 2026")
+        canvas.drawString(16 * mm, 8 * mm, "Independent reproduction note - August 2026, updated September 2026")
         canvas.drawRightString(width - 16 * mm, 8 * mm, f"Page {document.page}")
         canvas.restoreState()
 
@@ -509,7 +625,7 @@ def build_pdf(summaries: list[dict], rows: list[dict]) -> None:
         paragraph(
             "This study reproduces the ciFAIR-100 interleave-division experiment from <i>Integrating Curricula with Replays: Its Effects on Continual Learning</i>. "
             "A pretrained MobileNetV3-Small learns 20 sequential five-class tasks while retaining a class-balanced replay memory of 1,200 images. "
-            "The experiment compares divisions 1, 120, and 300 with controlled seeds 0-3. Division 120 improves continual average accuracy by 6.90 points and reduces forgetfulness by 9.19 points relative to division 1. Division 300 provides no accuracy gain over division 120 and has slightly worse forgetting, matching the paper's qualitative result.",
+            "The experiment compares divisions 1, 120, and 300 with controlled seeds 0-3. Division 120 improves continual average accuracy by 6.90 points and reduces forgetfulness by 9.19 points relative to division 1. Division 300 provides no accuracy gain over division 120 and has slightly worse forgetting, matching the paper's qualitative result. A follow-up equal-budget control (32 same-platform runs, paired seeds 0-7) removes the released code's duplicate current-task tail and changes accuracy by only -0.10 points at both divisions, so the interleaving gain is not a sample-count artifact.",
             body,
         )
     )
@@ -633,11 +749,11 @@ def build_pdf(summaries: list[dict], rows: list[dict]) -> None:
 
     story.append(paragraph("3. Audit findings and limitations", heading))
     limitations = [
-        ("Released code does not keep the current-sample budget exactly equal.", "For 2,250 current examples, the released implementation duplicates 90 examples at division 120 and 150 at division 300. The current report intentionally reproduces this behavior, so the gain cannot yet be attributed solely to interleaving frequency."),
+        ("Released code does not keep the current-sample budget exactly equal.", "For 2,250 current examples, the released implementation duplicates 90 examples at division 120 and 150 at division 300. The main matrix intentionally reproduces this behavior; Section 4 shows that removing it does not change the result."),
         ("Paper and code disagree on image size.", "The appendix states 72x72, while the released VaryDiv.py uses 74x74. This reproduction follows the released code at 74x74."),
         ("The bounded matrix covers three of five divisions.", "Divisions 8 and 60 remain untested. The selected 1/120/300 conditions are sufficient to test the two main qualitative claims but not reconstruct the full curve."),
         ("Runtime is not a valid cross-division result for the early division-1 seeds.", "Two early runs include Windows Modern Standby intervals. Their metrics and saved matrices are complete, but their elapsed-time fields should not be used for speed comparisons."),
-        ("Causal interpretation requires the equal-budget sensitivity run.", "A matched equal-budget experiment is the next decisive step because it removes duplicate-tail exposure while preserving the interleave schedule."),
+        ("Determinism holds per platform, not across platforms.", "Windows and WSL runs with identical library versions differ at float-rounding level in the CPU bicubic resize; one division-120 seed moves by 1.64 points. Paired comparisons therefore use runs from one platform only."),
     ]
     limitation_rows = []
     for label, explanation in limitations:
@@ -657,7 +773,60 @@ def build_pdf(summaries: list[dict], rows: list[dict]) -> None:
     ]))
     story.append(limitation_table)
 
-    story.append(paragraph("4. Reproducibility and evidence", heading))
+    story.append(PageBreak())
+    story.append(paragraph("4. Equal-budget control", heading))
+    story.append(
+        paragraph(
+            "The equal-budget implementation presents every current and replay example exactly once per epoch while keeping the interleave schedule. "
+            "Division 1 has an identical sequence under both implementations, so only divisions 120 and 300 were rerun. Because determinism does not carry across platforms, "
+            "both arms were rerun under WSL with paired seeds 0-7. Differences are equal-budget minus released-code; intervals are paired Student-t 95% intervals.",
+            body,
+        )
+    )
+    comparison = load_json(EQUAL_BUDGET_COMPARISON)
+    paired = {item["comparison"]: item for item in comparison["summaries"]}
+    control_rows = [[
+        paragraph("Division", table_header),
+        paragraph("Avg Acc diff (95% CI)", table_header),
+        paragraph("Sign-flip p", table_header),
+        paragraph("F diff (95% CI)", table_header),
+        paragraph("Sign-flip p", table_header),
+    ]]
+    for division in (120, 300):
+        item = paired[f"div{division}: equal-budget - released-code"]
+        cells = [paragraph(str(division), table_cell)]
+        for metric in ("continual_average_accuracy", "forgetfulness"):
+            stats = item[metric]
+            cells.append(paragraph(
+                f"{100 * stats['mean_diff']:+.2f} pp [{100 * stats['ci95_low']:+.2f}, {100 * stats['ci95_high']:+.2f}]",
+                table_cell,
+            ))
+            cells.append(paragraph(f"{stats['sign_flip_p']:.2f}", table_cell))
+        control_rows.append(cells)
+    control_table = Table(control_rows, colWidths=[20 * mm, 52 * mm, 27 * mm, 52 * mm, 27 * mm], repeatRows=1)
+    control_table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), NAVY),
+        ("GRID", (0, 0), (-1, -1), 0.5, BORDER),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [WHITE, LIGHT_GRAY]),
+        ("TOPPADDING", (0, 0), (-1, -1), 5),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+    ]))
+    story.append(control_table)
+    story.append(Spacer(1, 7))
+    story.append(RLImage(str(EQUAL_BUDGET_FIGURE), width=178 * mm, height=89 * mm))
+    story.append(paragraph("Figure 3. Paired seeds under released-code and equal-budget sequencing (WSL). The dashed line is the Windows four-seed division-1 mean.", small))
+    story.append(
+        paragraph(
+            "The duplicate tail has no detectable effect: accuracy changes by -0.10 points at both divisions, with intervals bounding the effect to roughly +/-0.5 points. "
+            "Under equal budgets, divisions 120 and 300 still exceed division 1 by 6.64 and 6.66 points in accuracy and lower forgetfulness by 8.77 and 8.87 points, "
+            "and division 300 again adds nothing over division 120. The paper's interleaving gain is therefore attributable to interleaving itself. "
+            "At four seeds, division 300 briefly showed a -0.39 point difference that vanished at eight seeds, so single differences below about one point should not be interpreted under this protocol.",
+            body,
+        )
+    )
+
+    story.append(paragraph("5. Reproducibility and evidence", heading))
     story.append(
         paragraph(
             "The matrix runner validates matching configurations, skips completed cells, and rewrites the aggregate summary after every successful run. The following command reproduces the reported matrix:",
@@ -674,8 +843,8 @@ def build_pdf(summaries: list[dict], rows: list[dict]) -> None:
     story.append(Preformatted(command, code_style))
     integrity_rows = [
         [paragraph("Evidence check", table_header), paragraph("Verified result", table_header)],
-        [paragraph("Planned cells", table_cell), paragraph("12/12 complete", table_cell)],
-        [paragraph("Per-run accuracy matrices", table_cell), paragraph("12 matrices; each 20x20", table_cell)],
+        [paragraph("Planned cells", table_cell), paragraph("12/12 main matrix; 32/32 equal-budget control (WSL)", table_cell)],
+        [paragraph("Per-run accuracy matrices", table_cell), paragraph("44 matrices; each 20x20", table_cell)],
         [paragraph("Numerical integrity", table_cell), paragraph("No NaN or Infinity in JSON/CSV evidence", table_cell)],
         [paragraph("Process outcome", table_cell), paragraph("Controller completed; exit code 0; error logs empty", table_cell)],
         [paragraph("Stored detail", table_cell), paragraph("Configuration, environment, task trajectory, epoch log, matrix, checkpoint", table_cell)],
@@ -729,7 +898,7 @@ def build_pdf(summaries: list[dict], rows: list[dict]) -> None:
     story.append(paragraph("Next experiment", heading))
     story.append(
         paragraph(
-            "Run divisions 1/120/300 under the equal-budget implementation with paired seeds. If the division-120 advantage remains after duplicate-tail exposure is removed, the result becomes substantially stronger evidence for interleaving frequency rather than sample-count confounding.",
+            "Run divisions 8 and 60 to reconstruct the full Table 1 curve. At the method level, fix the buffer at 2,000 examples and compare uniform replay with a curriculum- or importance-aware sampling policy under the same seeds and training budget.",
             body,
         )
     )
@@ -751,6 +920,7 @@ def main() -> None:
     summaries, rows = load_results()
     build_comparison_figure(summaries)
     build_seed_figure(rows)
+    build_equal_budget_figure(summaries)
     build_pdf(summaries, rows)
     print(f"wrote {COMPARISON_FIGURE.relative_to(ROOT)}")
     print(f"wrote {SEED_FIGURE.relative_to(ROOT)}")

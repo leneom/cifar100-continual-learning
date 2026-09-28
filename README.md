@@ -32,7 +32,20 @@ The project now includes a four-seed reproduction of selected ciFAIR-100 conditi
 
 ![Paper targets and reproduction](report/figures/tee_zhang_2023_paper_comparison.png)
 
-All six reproduced headline metrics are within 0.79 percentage points of the paper, and the main ordering is recovered: division 120 improves accuracy and forgetting over division 1, while division 300 provides no further accuracy gain. The report explicitly documents two paper-code discrepancies: the released code uses 74×74 images although the appendix states 72×72, and its chunking duplicates current-task tail examples for divisions 120 and 300. The next sensitivity experiment therefore uses the repository's `equal-budget` implementation.
+All six reproduced headline metrics are within 0.79 percentage points of the paper, and the main ordering is recovered: division 120 improves accuracy and forgetting over division 1, while division 300 provides no further accuracy gain. The report explicitly documents two paper-code discrepancies: the released code uses 74×74 images although the appendix states 72×72, and its chunking duplicates current-task tail examples for divisions 120 and 300.
+
+### Equal-budget control
+
+An `equal-budget` sensitivity matrix removes the duplicate tail so that every current and replay example appears exactly once per epoch. Windows and WSL runs are not bit-identical (CPU bicubic resize rounding shifts a single seed by up to 1.6 pp), so both arms were rerun on WSL with paired seeds `0–7` (32 runs). Division 1 is identical under both implementations and was not rerun.
+
+| Division | released-code Avg Acc | equal-budget Avg Acc | Paired diff (95% CI) | released-code F | equal-budget F | Paired diff (95% CI) |
+|---:|---:|---:|---:|---:|---:|---:|
+| 120 | 46.33% ± 0.84% | 46.23% ± 0.42% | −0.10 pp [−0.59, +0.39] | 55.90% ± 1.48% | 55.92% ± 1.47% | +0.01 pp [−1.59, +1.62] |
+| 300 | 46.35% ± 0.52% | 46.25% ± 0.60% | −0.10 pp [−0.40, +0.20] | 55.65% ± 1.40% | 55.82% ± 0.88% | +0.17 pp [−1.10, +1.44] |
+
+![Equal-budget paired comparison](report/figures/tee_zhang_2023_equal_budget.png)
+
+The duplicate tail has no detectable effect: the paired accuracy difference is bounded to roughly ±0.5 pp. Under equal budgets, divisions 120 and 300 still exceed division 1 (39.59%) by 6.64 and 6.66 pp and lower F by 8.77 and 8.87 pp, so the paper's interleaving gain is attributable to interleaving rather than unequal sample counts. Analysis: `tools/analyze_tee_zhang_equal_budget.py`; paired results in `runs/tee-zhang-2023/equal-budget-comparison/`.
 
 See the [protocol and audit](docs/TEE_ZHANG_2023_REPRODUCTION.md), [editable reproduction report](report/TEE_ZHANG_2023_REPRODUCTION_REPORT.md), and [machine-readable summary](runs/tee-zhang-2023/released-code/summary.csv). The local PDF can be regenerated with `python tools/build_tee_zhang_reproduction_report.py`.
 
@@ -126,6 +139,6 @@ RESULTS.md                Detailed observations, failures, and limitations
 
 ## Next research step
 
-The immediate paper-reproduction extension reruns divisions `1 / 120 / 300` with paired seeds under the `equal-budget` sequence implementation. This removes the released code's duplicate-tail exposure and tests whether the division-120 advantage is attributable to interleaving rather than unequal sample counts. The broader method-level extension then fixes the buffer at 2,000 examples and compares uniform replay with one curriculum- or importance-aware sampling policy. DER++ remains a useful secondary baseline, while a separate systems experiment will test compact `uint8` storage with dynamic replay-time augmentation.
+The equal-budget control is complete and supports the interleaving interpretation. The remaining paper-reproduction gap is divisions `8 / 60`, which would reconstruct the full Table 1 curve. The broader method-level extension fixes the buffer at 2,000 examples and compares uniform replay with one curriculum- or importance-aware sampling policy. DER++ remains a useful secondary baseline, while a separate systems experiment will test compact `uint8` storage with dynamic replay-time augmentation.
 
 This repository is an independent learning-and-research project intended to demonstrate a complete experimental workflow: formulate a question, implement baselines, control comparisons, retain failed runs, quantify uncertainty, and state the limits of the evidence.

@@ -124,7 +124,7 @@ This distinction is part of the scientific result, not a cleanup detail.
    head, buffer size, checkpoints, and result serialization.
 4. Run divisions `1 / 120 / 300` with four seeds in `released-code` mode.
 5. Run the matching `equal-budget` sensitivity experiment before interpreting
-   the result as evidence for interleaving itself.
+   the result as evidence for interleaving itself (completed 2026-09-28; see below).
 
 ## Completed execution record
 
@@ -194,9 +194,45 @@ conda run --no-capture-output -n ece488_clip python run_tee_zhang_2023_matrix.py
 The matrix runner validates matching configurations, skips completed runs, and
 updates `summary.json` and `summary.csv` after every successful run.
 
-### Next scientific step
+### Cross-platform determinism check (WSL, 2026-09-27)
 
-Run the same divisions and paired seeds in `equal-budget` mode. This removes the
-released code's duplicate-tail exposure while retaining the interleave schedule.
-If the division-120 benefit remains, it becomes stronger evidence for
-interleaving frequency rather than unequal current-sample counts.
+The equal-budget sensitivity matrix runs under WSL (Ubuntu 24.04, conda env
+`cifar-cl`) with the same torch 2.13.0+cu126, torchvision 0.28.0, Pillow 12.3.0
+and NumPy 2.2.6 as the Windows `ece488_clip` environment and the same RTX 4080
+Laptop GPU. Before pairing new runs with the Windows matrix, the division-120
+seed-0 `released-code` run was repeated under WSL
+(`runs/tee-zhang-2023/wsl-platform-check/`).
+
+- Within WSL, two repeated 2-task smoke runs are bit-identical.
+- Across platforms, the initial model parameters and the interleave plan hash
+  are identical, but the preprocessed input tensors differ at float-rounding
+  level (first 32-image batch sum -12013.2610 on WSL vs -12013.2596 on
+  Windows). The source is the CPU bicubic tensor resize, whose compiled
+  kernels differ between the Linux and Windows builds.
+- This perturbation propagates through training: the full division-120 seed-0
+  run gives 45.60% Avg Acc and 57.24% F under WSL versus 47.24% and 54.63%
+  under Windows, a shift larger than the four-seed sample SD (0.75 pp).
+
+Consequences: determinism holds per platform, not across platforms; paired
+comparisons must use runs from one platform; and seed-level differences of
+about 1.5 pp should be read as ordinary training noise for this protocol.
+The WSL `released-code` baseline for divisions 120/300 is therefore rerun in
+the same root, and both arms are extended to seeds 0-7. Division 1 is not
+rerun, because its interleave plan is identical under both implementations and
+its gap to divisions 120/300 (about 7 pp) is far larger than this noise.
+
+### Equal-budget control result
+
+Both arms completed under WSL for divisions 120/300 and paired seeds 0-7
+(`runs/tee-zhang-2023/equal-budget/`, `runs/tee-zhang-2023/wsl-platform-check/released-code/`;
+paired statistics in `runs/tee-zhang-2023/equal-budget-comparison/`).
+
+| Division | Paired Avg Acc diff, equal-budget - released (95% CI) | Paired F diff (95% CI) |
+|---:|---:|---:|
+| 120 | -0.10 pp [-0.59, +0.39] | +0.01 pp [-1.59, +1.62] |
+| 300 | -0.10 pp [-0.40, +0.20] | +0.17 pp [-1.10, +1.44] |
+
+The duplicate tail has no detectable effect, and the equal-budget arms still
+exceed division 1 by 6.64 / 6.66 pp in accuracy. The division-120 benefit is
+therefore attributable to interleaving rather than unequal current-sample
+counts. Remaining reproduction gap: divisions 8 and 60.

@@ -37,13 +37,45 @@ seed 的样本标准差，`F` 越低越好：
 
 - 只覆盖论文五个 divisions 中的 `1 / 120 / 300`，尚未运行 `8 / 60`；
 - 论文附录写 72×72，而发布代码实际使用 74×74，本次遵循发布代码；
-- 发布代码在 division 120/300 下分别每 epoch 重复 90/150 个 current examples，
-  所以当前结果还不能把提升完全归因于 interleaving frequency。
+- 发布代码在 division 120/300 下分别每 epoch 重复 90/150 个 current examples。
+  这一混淆已由下面的 equal-budget 对照实验排除。
 
-下一项决定性实验是使用 paired seeds 运行 `equal-budget` 版本，移除 duplicate-tail
-sample-count confound。完整方法、逐 seed 附录和复现命令见
+完整方法、逐 seed 附录和复现命令见
 [复现报告源文档](report/TEE_ZHANG_2023_REPRODUCTION_REPORT.md) 与
 [协议审计](docs/TEE_ZHANG_2023_REPRODUCTION.md)。
+
+## Equal-budget 对照实验（2026-09-27 至 09-28）
+
+目的：检验 division 120/300 的提升是否来自发布代码多呈现的 90/150 个 current
+examples，而不是 interleaving 本身。`equal-budget` 模式让每个 current 和 replay
+样本每个 epoch 恰好出现一次；division 1 在两种模式下的训练序列完全相同，因此不需要重跑。
+
+平台控制：同一 seed 在 Windows 与 WSL 上的结果并不逐位一致（CPU bicubic resize
+的浮点舍入不同），division 120 seed 0 的 Avg Acc 相差 1.64 个百分点，超过四 seed
+标准差。因此两组都在 WSL 上重新运行，按 seed 配对，并扩展到 seeds `0–7`
+（32 组实验，全部 20×20 矩阵、无 NaN/Infinity、错误日志为空）。
+
+| Division | released-code Avg Acc | equal-budget Avg Acc | 配对差值 (95% CI) | released-code F | equal-budget F | 配对差值 (95% CI) |
+|---:|---:|---:|---:|---:|---:|---:|
+| 120 | 46.33% ± 0.84% | 46.23% ± 0.42% | −0.10 pp [−0.59, +0.39] | 55.90% ± 1.48% | 55.92% ± 1.47% | +0.01 pp [−1.59, +1.62] |
+| 300 | 46.35% ± 0.52% | 46.25% ± 0.60% | −0.10 pp [−0.40, +0.20] | 55.65% ± 1.40% | 55.82% ± 0.88% | +0.17 pp [−1.10, +1.44] |
+
+![Equal-budget paired comparison](report/figures/tee_zhang_2023_equal_budget.png)
+
+结论：
+
+- 重复样本没有可检测的效应。两个 division 的 Avg Acc 配对差值都是 −0.10 个百分点，
+  95% CI 把效应限制在约 ±0.5 个百分点以内；精确符号翻转检验 p = 0.66 / 0.45。
+- 移除重复样本后，interleaving 的收益依然存在：equal-budget division 120/300 比
+  division 1（39.59%）高 6.64 / 6.66 个百分点，`F` 低 8.77 / 8.87 个百分点。division 1
+  参考值来自 Windows 的四 seed 结果，跨平台噪声约 1.6 个百分点，远小于这一差距。
+- division 300 相比 120 依然没有额外收益（46.25% 对 46.23%），与论文的平台期一致。
+- n = 4 时 division 300 曾出现 −0.39 pp 的差值（4/4 为负），扩展到 8 个 seed 后消失，
+  说明这一协议下小于约 1 个百分点的单次差异不应解读。
+
+因此，论文所说的 interleaving 收益可以归因于 interleaving 本身，而不是发布代码的样本数量差异。
+数据：`runs/tee-zhang-2023/equal-budget/`、`runs/tee-zhang-2023/wsl-platform-check/released-code/`、
+`runs/tee-zhang-2023/equal-budget-comparison/`；分析脚本 `tools/analyze_tee_zhang_equal_budget.py`。
 
 ## 实验设置
 

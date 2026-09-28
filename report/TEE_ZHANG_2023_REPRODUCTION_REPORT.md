@@ -4,7 +4,7 @@
 
 Independent reproduction note prepared for research discussion
 
-August 2026
+August 2026; equal-budget control added September 2026
 
 ## Executive summary
 
@@ -32,6 +32,12 @@ recovered:
 
 For accuracy, higher is better. For `F`, lower is better. Delta is reproduction
 minus paper, measured in percentage points.
+
+A follow-up equal-budget control (32 WSL runs, paired seeds `0-7`) removes the
+released code's duplicate current-task tail. The paired accuracy change is
+-0.10 pp at both division 120 and 300 (95% CIs within +/-0.6 pp), while both
+divisions still exceed division 1 by about 6.6 pp. The interleaving gain is
+therefore not an artifact of unequal sample counts.
 
 ## Experimental protocol
 
@@ -77,9 +83,9 @@ environment; it does not change the experimental ordering.
 The released implementation duplicates the tail of the current-task sequence
 when it constructs chunks. With 2,250 current examples, this exposes 90 extra
 current examples per epoch at division 120 and 150 extra at division 300.
-This report intentionally preserves that behavior to trace the published code
-and Table 1 trend. It therefore cannot yet attribute the gain solely to
-interleaving frequency.
+The main matrix intentionally preserves that behavior to trace the published
+code and Table 1 trend; the equal-budget control below shows that the
+duplicate tail does not explain the gain.
 
 ### Paper-code image-size discrepancy
 
@@ -99,25 +105,54 @@ Two early division-1 runs contain Windows Modern Standby intervals. Their
 metrics and saved matrices are complete, but their elapsed-time values are not
 valid for speed comparison.
 
-### Required sensitivity experiment
+## Equal-budget control
 
-The next decisive experiment is the matching `equal-budget` matrix. It removes
-duplicate-tail exposure while retaining the interleave schedule. If the
-division-120 advantage remains, the evidence for interleaving frequency will
-be substantially stronger.
+The `equal-budget` implementation presents every current and replay example
+exactly once per epoch while keeping the interleave schedule. Division 1 has
+an identical sequence under both implementations, so only divisions 120 and
+300 were rerun.
+
+**Platform control.** Windows and WSL runs with identical library versions are
+not bit-identical: the CPU bicubic resize rounds differently, and the
+division-120 seed-0 run moves by 1.64 pp in accuracy. Both arms were therefore
+rerun under WSL with paired seeds `0-7` (32 runs). All 32 accuracy matrices are
+20x20 with no NaN or Infinity.
+
+| Division | released-code Avg Acc | equal-budget Avg Acc | Paired diff (95% CI) | released-code F | equal-budget F | Paired diff (95% CI) |
+|---:|---:|---:|---:|---:|---:|---:|
+| 120 | 46.33% +/- 0.84% | 46.23% +/- 0.42% | -0.10 pp [-0.59, +0.39] | 55.90% +/- 1.48% | 55.92% +/- 1.47% | +0.01 pp [-1.59, +1.62] |
+| 300 | 46.35% +/- 0.52% | 46.25% +/- 0.60% | -0.10 pp [-0.40, +0.20] | 55.65% +/- 1.40% | 55.82% +/- 0.88% | +0.17 pp [-1.10, +1.44] |
+
+Intervals use the paired Student-t distribution; exact sign-flip tests give
+p = 0.66 (division 120) and 0.45 (division 300) for accuracy.
+
+![Equal-budget paired comparison](figures/tee_zhang_2023_equal_budget.png)
+
+1. The duplicate tail has no detectable effect; the accuracy effect is bounded
+   to roughly +/-0.5 pp.
+2. Under equal budgets, divisions 120 and 300 exceed division 1 by 6.64 and
+   6.66 pp in accuracy and lower `F` by 8.77 and 8.87 pp. The division-1
+   reference is the Windows four-seed mean; cross-platform noise (about 1.6 pp)
+   is far smaller than this gap.
+3. Division 300 again adds nothing over division 120, matching the plateau.
+4. With four seeds, division 300 briefly showed a -0.39 pp difference (4/4
+   negative) that vanished at eight seeds. Single-run differences below about
+   1 pp should not be interpreted under this protocol.
 
 ## Evidence integrity
 
-- 12/12 planned result cells completed.
+- 12/12 planned main-matrix cells and 32/32 equal-budget control cells completed.
 - Every run stores a 20x20 accuracy matrix.
 - No NaN or Infinity occurs in the JSON or CSV evidence.
 - The final controller exited with code 0 and empty error logs.
 - Every result records configuration, environment, task trajectory, epoch log,
   matrix, and checkpoint.
-- Thirteen repository tests cover class order, sequencing, replay quotas, and
-  paper metric definitions.
+- Fifteen repository tests cover class order, sequencing, replay quotas,
+  paper metric definitions, and the paired equal-budget statistics.
 
 ## Reproduction command
+
+Main matrix (Windows):
 
 ```powershell
 $env:TORCH_HOME = "$PWD\.torch-cache"
@@ -125,6 +160,16 @@ conda run --no-capture-output -n ece488_clip python run_tee_zhang_2023_matrix.py
   --sequence-implementation released-code `
   --divisions 1 120 300 `
   --seeds 0 1 2 3
+```
+
+Equal-budget control (WSL, conda env `cifar-cl`):
+
+```bash
+python run_tee_zhang_2023_matrix.py --sequence-implementation equal-budget \
+  --divisions 120 300 --seeds 0 1 2 3 4 5 6 7
+python run_tee_zhang_2023_matrix.py --output-root runs/tee-zhang-2023/wsl-platform-check \
+  --sequence-implementation released-code --divisions 120 300 --seeds 0 1 2 3 4 5 6 7
+python tools/analyze_tee_zhang_equal_budget.py --seeds 0 1 2 3 4 5 6 7
 ```
 
 The runner validates matching configurations, skips completed cells, and

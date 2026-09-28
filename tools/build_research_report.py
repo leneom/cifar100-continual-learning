@@ -29,6 +29,12 @@ BORDER = "C9D2DC"
 WHITE = "FFFFFF"
 BLACK = "111827"
 
+# Windows fonts, also reachable from WSL through the /mnt/c mount.
+FONT_DIR = next(
+    (path for path in (Path("C:/Windows/Fonts"), Path("/mnt/c/Windows/Fonts")) if path.exists()),
+    Path("C:/Windows/Fonts"),
+)
+
 
 def set_run_font(run, size=None, bold=None, italic=None, color=BLACK, name="Calibri"):
     run.font.name = name
@@ -314,8 +320,8 @@ def load_summary():
 
 def font(size, bold=False):
     candidates = [
-        Path("C:/Windows/Fonts/arialbd.ttf" if bold else "C:/Windows/Fonts/arial.ttf"),
-        Path("C:/Windows/Fonts/calibrib.ttf" if bold else "C:/Windows/Fonts/calibri.ttf"),
+        Path(FONT_DIR, "arialbd.ttf" if bold else "arial.ttf"),
+        Path(FONT_DIR, "calibrib.ttf" if bold else "calibri.ttf"),
     ]
     for candidate in candidates:
         if candidate.exists():
