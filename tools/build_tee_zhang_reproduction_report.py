@@ -973,10 +973,9 @@ def build_pdf(summaries: list[dict], rows: list[dict]) -> None:
         )
     )
     command = (
-        "$env:TORCH_HOME = \"$PWD\\.torch-cache\"\n"
-        "conda run --no-capture-output -n ece488_clip python run_tee_zhang_2023_matrix.py `\n"
-        "  --sequence-implementation released-code `\n"
-        "  --divisions 1 120 300 `\n"
+        "python run_tee_zhang_2023_matrix.py \\\n"
+        "  --sequence-implementation released-code \\\n"
+        "  --divisions 1 120 300 \\\n"
         "  --seeds 0 1 2 3"
     )
     story.append(Preformatted(command, code_style))

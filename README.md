@@ -107,29 +107,30 @@ CIFAR-100 is split into ten tasks of ten classes. A ResNet-18 learns the tasks s
 - accuracy-matrix, JSON, CSV, checkpoint, and SVG artifacts;
 - resumable buffer-size and multi-seed ablations;
 - guards against non-finite training loss;
-- thirteen automated tests for task construction, metrics, Replay, EWC, ablation matching, statistics, plotting, paper class order, interleave sequencing, replay quotas, and paper-specific metrics.
+- nineteen automated tests for task construction, metrics, Replay, EWC, ablation matching, statistics, plotting, paper class order, interleave sequencing, replay quotas, paper-specific metrics, equal-budget paired statistics, and loss-prioritized replay sampling.
 
 ## Reproduce the project
 
-The validated local environment is named `ece488_clip`. Run the fast synthetic smoke test first:
+Experiments were run with Python 3.10, PyTorch 2.13 (CUDA 12.6), torchvision 0.28 and NumPy 2.2 on a single RTX 4080 Laptop GPU. Install the dependencies into a fresh environment, then run the fast synthetic smoke test:
 
-```powershell
-conda run -n ece488_clip python train.py --dataset synthetic --num-classes 6 --classes-per-task 2 --epochs-per-task 1 --method naive --model tiny --output-dir runs/smoke-naive
-conda run -n ece488_clip python -m unittest discover -s tests -v
+```bash
+pip install -r requirements.txt
+python train.py --dataset synthetic --num-classes 6 --classes-per-task 2 --epochs-per-task 1 --method naive --model tiny --output-dir runs/smoke-naive
+python -m unittest discover -s tests -v
 ```
 
 Run the deterministic CIFAR-100 baselines:
 
-```powershell
-conda run --no-capture-output -n ece488_clip python train.py --dataset cifar100 --method naive --epochs-per-task 10 --seed 42 --output-dir runs/cifar100-naive-deterministic
-conda run --no-capture-output -n ece488_clip python train.py --dataset cifar100 --method replay --epochs-per-task 10 --buffer-size 2000 --replay-batch-size 64 --seed 42 --output-dir runs/cifar100-replay-2000-deterministic
-conda run --no-capture-output -n ece488_clip python train.py --dataset cifar100 --method ewc --epochs-per-task 10 --ewc-lambda 10 --ewc-decay 0.9 --seed 42 --output-dir runs/cifar100-ewc-10-deterministic
+```bash
+python train.py --dataset cifar100 --method naive --epochs-per-task 10 --seed 42 --output-dir runs/cifar100-naive-deterministic
+python train.py --dataset cifar100 --method replay --epochs-per-task 10 --buffer-size 2000 --replay-batch-size 64 --seed 42 --output-dir runs/cifar100-replay-2000-deterministic
+python train.py --dataset cifar100 --method ewc --epochs-per-task 10 --ewc-lambda 10 --ewc-decay 0.9 --seed 42 --output-dir runs/cifar100-ewc-10-deterministic
 ```
 
 Run or resume the three-seed replay ablation:
 
-```powershell
-conda run --no-capture-output -n ece488_clip python run_replay_ablation.py --buffer-sizes 1000 2000 5000 --seeds 0 1 42 --output-dir runs/replay-multiseed
+```bash
+python run_replay_ablation.py --buffer-sizes 1000 2000 5000 --seeds 0 1 42 --output-dir runs/replay-multiseed
 ```
 
 The ablation runner searches existing result files and reuses only runs whose full comparison configuration matches the requested experiment.
@@ -150,7 +151,7 @@ continual_learning/       Core data, model, buffer, EWC, metrics, and experiment
 tests/                    Unit tests for the research pipeline
 runs/                     Result JSON, accuracy matrices, plots, and local checkpoints
 docs/LEARNING_GUIDE.md    Conceptual guide and experiment workflow
-report/                   Professor-facing short research report
+report/                   Short research report (PDF/DOCX) and reproduction report
 train.py                  Main experiment entry point
 run_replay_ablation.py    Resumable capacity and multi-seed study
 run_tee_zhang_2023_matrix.py  Resumable paper-reproduction matrix
@@ -171,3 +172,5 @@ RESULTS.md                Detailed observations, failures, and limitations
 The paper reproduction is now complete: the full Table 1 curve is recovered on one platform, and the equal-budget control supports the interleaving interpretation. The first method-level comparison (uniform vs loss-prioritized replay at buffer 2,000) found no detectable effect because buffer loss collapses once the stored examples are memorized. The next step is a priority signal that memorization cannot mask, such as loss on fresh augmentations of stored examples or counts of forgetting events. DER++ remains a useful secondary baseline, while a separate systems experiment will test compact `uint8` storage with dynamic replay-time augmentation.
 
 This repository is an independent learning-and-research project intended to demonstrate a complete experimental workflow: formulate a question, implement baselines, control comparisons, retain failed runs, quantify uncertainty, and state the limits of the evidence.
+
+This project was developed with the help of AI coding assistants.

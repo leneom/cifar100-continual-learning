@@ -98,19 +98,22 @@ buffer 固定为 2,000（reservoir 存储，每步回放 64 个），两组只�
 - 可断点复用的 buffer-size 与多 seed 消融；
 - JSON、CSV、checkpoint 和 SVG 实验产物；
 - 确定性 CUDA 与非有限 loss 防护；
-- 十三项自动测试，包括论文 class order、interleave sequencing、replay quota 与论文指标公式。
+- 十九项自动测试，包括论文 class order、interleave sequencing、replay quota、论文指标公式、equal-budget 配对统计与 loss 优先级回放采样。
 
 ## 快速验证
 
-```powershell
-conda run -n ece488_clip python train.py --dataset synthetic --num-classes 6 --classes-per-task 2 --epochs-per-task 1 --method naive --model tiny --output-dir runs/smoke-naive
-conda run -n ece488_clip python -m unittest discover -s tests -v
+实验环境：Python 3.10、PyTorch 2.13（CUDA 12.6）、torchvision 0.28、NumPy 2.2，单张 RTX 4080 Laptop GPU。
+
+```bash
+pip install -r requirements.txt
+python train.py --dataset synthetic --num-classes 6 --classes-per-task 2 --epochs-per-task 1 --method naive --model tiny --output-dir runs/smoke-naive
+python -m unittest discover -s tests -v
 ```
 
 三随机种子 Replay 消融：
 
-```powershell
-conda run --no-capture-output -n ece488_clip python run_replay_ablation.py --buffer-sizes 1000 2000 5000 --seeds 0 1 42 --output-dir runs/replay-multiseed
+```bash
+python run_replay_ablation.py --buffer-sizes 1000 2000 5000 --seeds 0 1 42 --output-dir runs/replay-multiseed
 ```
 
 完整配置、逐任务矩阵、失败实验和结论边界见 [RESULTS.md](RESULTS.md)。
@@ -118,3 +121,5 @@ conda run --no-capture-output -n ece488_clip python run_replay_ablation.py --buf
 ## 后续研究
 
 论文复现已经完成：同一平台上复现了完整的 Table 1 曲线，`equal-budget` 对照实验也支持 interleaving 解释。第一个方法层面的对比（buffer 2,000 下的 uniform 与 loss 优先级回放）没有检测到效应，原因是 buffer 样本被记住后 loss 失去信号。下一步是换一个不会被记忆掩盖的优先级信号，例如对存储样本的新增强视图计算 loss，或统计遗忘事件次数。DER++ 保留为第二基线；另一个工程方向是将 ReplayBuffer 改为紧凑 `uint8` 原图存储，并在 replay 时动态增强。
+
+本项目在 AI 编程助手的帮助下完成。

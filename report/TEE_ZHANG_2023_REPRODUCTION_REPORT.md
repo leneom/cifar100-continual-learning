@@ -184,13 +184,12 @@ Paired differences between adjacent divisions (n = 8, 95% CI):
 
 ## Reproduction command
 
-Main matrix (Windows):
+Main matrix (originally run on Windows; the same command works on Linux):
 
-```powershell
-$env:TORCH_HOME = "$PWD\.torch-cache"
-conda run --no-capture-output -n ece488_clip python run_tee_zhang_2023_matrix.py `
-  --sequence-implementation released-code `
-  --divisions 1 120 300 `
+```bash
+python run_tee_zhang_2023_matrix.py \
+  --sequence-implementation released-code \
+  --divisions 1 120 300 \
   --seeds 0 1 2 3
 ```
 

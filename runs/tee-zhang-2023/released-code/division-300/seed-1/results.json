@@ -8,8 +8,8 @@
     "target": "Table 1 ciFAIR-100 interleave divisions"
   },
   "config": {
-    "data_root": "C:\\Users\\zxzx\\Documents\\ChatGPT\\continue learning\\data",
-    "output_dir": "C:\\Users\\zxzx\\Documents\\ChatGPT\\continue learning\\runs\\tee-zhang-2023\\released-code\\division-300\\seed-1",
+    "data_root": "data",
+    "output_dir": "runs/tee-zhang-2023/released-code/division-300/seed-1",
     "seed": 1,
     "division": 300,
     "sequence_implementation": "released-code",

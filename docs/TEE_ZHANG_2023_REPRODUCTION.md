@@ -183,13 +183,14 @@ retraining.
 
 ### Reproduction command
 
-```powershell
-$env:TORCH_HOME = "$PWD\.torch-cache"
-conda run --no-capture-output -n ece488_clip python run_tee_zhang_2023_matrix.py `
-  --sequence-implementation released-code `
-  --divisions 1 120 300 `
+```bash
+python run_tee_zhang_2023_matrix.py \
+  --sequence-implementation released-code \
+  --divisions 1 120 300 \
   --seeds 0 1 2 3
 ```
+
+The runner sets `TORCH_HOME` to the project-local `.torch-cache/` unless it is already defined.
 
 The matrix runner validates matching configurations, skips completed runs, and
 updates `summary.json` and `summary.csv` after every successful run.
@@ -198,7 +199,7 @@ updates `summary.json` and `summary.csv` after every successful run.
 
 The equal-budget sensitivity matrix runs under WSL (Ubuntu 24.04, conda env
 `cifar-cl`) with the same torch 2.13.0+cu126, torchvision 0.28.0, Pillow 12.3.0
-and NumPy 2.2.6 as the Windows `ece488_clip` environment and the same RTX 4080
+and NumPy 2.2.6 as the original Windows environment and the same RTX 4080
 Laptop GPU. Before pairing new runs with the Windows matrix, the division-120
 seed-0 `released-code` run was repeated under WSL
 (`runs/tee-zhang-2023/wsl-platform-check/`).

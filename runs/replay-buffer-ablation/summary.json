@@ -1154,7 +1154,7 @@
         }
       ],
       "elapsed_seconds": 911.9575384000018,
-      "_path": "C:\\Users\\zxzx\\Documents\\ChatGPT\\continue learning\\runs\\replay-buffer-ablation\\buffer-200-seed-42\\results.json"
+      "_path": "runs/replay-buffer-ablation/buffer-200-seed-42/results.json"
     },
     {
       "config": {
@@ -2253,7 +2253,7 @@
         }
       ],
       "elapsed_seconds": 996.3042537000001,
-      "_path": "C:\\Users\\zxzx\\Documents\\ChatGPT\\continue learning\\runs\\replay-buffer-ablation\\buffer-500-seed-42\\results.json"
+      "_path": "runs/replay-buffer-ablation/buffer-500-seed-42/results.json"
     },
     {
       "config": {
@@ -3352,7 +3352,7 @@
         }
       ],
       "elapsed_seconds": 1275.3774795000027,
-      "_path": "C:\\Users\\zxzx\\Documents\\ChatGPT\\continue learning\\runs\\replay-buffer-ablation\\buffer-1000-seed-42\\results.json"
+      "_path": "runs/replay-buffer-ablation/buffer-1000-seed-42/results.json"
     },
     {
       "config": {
@@ -4451,7 +4451,7 @@
         }
       ],
       "elapsed_seconds": 839.6233106999862,
-      "_path": "C:\\Users\\zxzx\\Documents\\ChatGPT\\continue learning\\runs\\cifar100-replay-2000-deterministic\\results.json"
+      "_path": "runs/cifar100-replay-2000-deterministic/results.json"
     },
     {
       "config": {
@@ -5550,7 +5550,7 @@
         }
       ],
       "elapsed_seconds": 1205.0994422000003,
-      "_path": "C:\\Users\\zxzx\\Documents\\ChatGPT\\continue learning\\runs\\replay-buffer-ablation\\buffer-5000-seed-42\\results.json"
+      "_path": "runs/replay-buffer-ablation/buffer-5000-seed-42/results.json"
     }
   ]
 }

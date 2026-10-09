@@ -566,7 +566,7 @@ def build_report():
         "Entrypoints: train.py, plot_results.py, and run_replay_ablation.py.",
         "Artifacts: results.json, accuracy_matrix.csv, checkpoint.pt, and SVG plots for every formal run.",
         "Validation: eight automated tests covering task construction, metrics, Replay, EWC, ablation matching, statistics, and SVG output.",
-        "Environment: PyTorch/CUDA runs in the validated ece488_clip Conda environment; deterministic mode is enabled by default.",
+        "Environment: PyTorch/CUDA with deterministic algorithms enabled by default.",
     ):
         add_bullet(doc, item)
 
